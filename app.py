@@ -79,6 +79,7 @@ def giveLogout():
 
 @app.route('/createpost', methods=['POST'])
 def createPost():
+    #Create post should be called via html form
     auth = request.cookies.get('auth_token')
     message = request.form.get('message')
     message = message.replace("&", "&amp;") #Replaces & with html safe version
