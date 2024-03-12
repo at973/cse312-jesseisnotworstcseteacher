@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>jesseisnotworstcseteacher</title>
+        <link rel="stylesheet" type="text/css" href="/css/style.css"/>
+        <script src="/scripts/functions.js"></script>
+    </head>
+    <div class="title">
+        <h1>jesseisnotworstcseteacher </h1>
+    </div>
+    <div class="Content">
+        <div class="chat">
+            <body>Chat goes here</body>
+        </div>
+    </div>
+    <div class="users">
+        <body>Username: Not Logged In</body>
+
+    </div>
+    <div class="register">
+        Register:
+        <form action="/register" method="post">
+            <input type="text" name="username" placeholder="Username">
+            <input type="text" name="password" placeholder="Password">
+            <input type="text" name="password2" placeholder="Same Password">
+            <input type="submit" value="Register">
+        </form>
+    </div>
+
+    <div class="login">
+        Login:
+        <form action="/login" method="post">
+            <input type="text" name="username" placeholder="Username">
+            <input type="text" name="password" placeholder="Password">
+            <input type="submit" value="Login">
+        </form>
+    </div>
+
+    <div class="logout">
+        Logout:
+        <form action="/logout" method="post">
+            <input type="submit" value="Logout">
+        </form>
+    </div>
+</html>
