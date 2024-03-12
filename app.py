@@ -76,7 +76,30 @@ def giveLogout():
         update_token(hashed_auth)
         request.cookies.pop('auth_token')
     return make_response(redirect(url_for('index')))
-        
+
+@app.route('/createpost', methods=['POST'])
+def createPost():
+    #Create post should be called via html form
+    auth = request.cookies.get('auth_token')
+    message = request.form.get('message')
+    message = message.replace("&", "&amp;") #Replaces & with html safe version
+    message = message.replace(">", "&gt;") #Replaces > with html safe version
+    message = message.replace("<", "&lt;") #Replaces < with html safe version
+    message = message.replace("\"", "&quot;") #Replaces " with html safe version
+    script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int PRIMARY KEY AUTO_INCREMENT)'
+    mycursor.execute(script)
+    if auth is not None:
+        script = 'SELECT * from Token where auth_token = %s'
+        mycursor.execute(script, (auth,))
+        data = mycursor.fetchone() #data[0] = auth_token data[1] = exist
+        if data[1] == True: #If auth token and proper auth token, create post
+            script = 'Select username from User where auth_token = %s'
+            mycursor.execute(script, (auth,))
+            username = mycursor.fetchone()[0] 
+            script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+            mycursor.execute(script, (username, message))
+    db.commit() 
+
 def update(auth_token, username):
     mycursor.execute('UPDATE User SET auth_token = %s WHERE username = %s', (auth_token, username))
     db.commit
