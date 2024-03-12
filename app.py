@@ -89,12 +89,12 @@ def createPost():
     script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int PRIMARY KEY AUTO_INCREMENT)'
     mycursor.execute(script)
     if auth is not None:
-        script = 'SELECT * from Token where auth_token = ' + auth        
-        mycursor.execute(script)
+        script = 'SELECT * from Token where auth_token = %s'
+        mycursor.execute(script, (auth,))
         data = mycursor.fetchone() #data[0] = auth_token data[1] = exist
         if data[1] == True: #If auth token and proper auth token, create post
-            script = 'Select username from User where auth_token = ' + auth
-            mycursor.execute(script)
+            script = 'Select username from User where auth_token = %s'
+            mycursor.execute(script, (auth,))
             username = mycursor.fetchone()[0] 
             script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
             mycursor.execute(script, (username, message))
