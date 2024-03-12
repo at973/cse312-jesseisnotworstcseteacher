@@ -3,10 +3,13 @@ import mysql.connector
 import bcrypt
 import secrets
 import hashlib
+import time 
 
 app = Flask(__name__)
 
-db = mysql.connector.connect(host='mysql', user='user', passwd='password', database='users')
+time.sleep(3)
+
+db = mysql.connector.connect(host='oursql', user='user', passwd='password', database='mysql')
 mycursor = db.cursor()
 
 @app.route('/') #Returns templates/index.html
@@ -96,4 +99,4 @@ def giveImage(images):
     return send_from_directory('images', images)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,host="0.0.0.0",port=8080)
