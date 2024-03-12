@@ -87,7 +87,7 @@ def createPost():
     message = message.replace("<", "&lt;") #Replaces < with html safe version
     message = message.replace("\"", "&quot;") #Replaces " with html safe version
     script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int PRIMARY KEY AUTO_INCREMENT)'
-    mycursor.execute()
+    mycursor.execute(script)
     if auth is not None:
         script = 'SELECT * from Token where auth_token = ' + auth        
         mycursor.execute(script)
