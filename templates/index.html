@@ -21,14 +21,26 @@
             </div>
         </nav>
         <div class="Content columns">
-            <div class="chat column is-three-fifths box">
-                <article class="message is-primary">
-                    <div class="message-body">
-                        <b>Guest: </b>this is what a chat looks like
-                    </div>
-                </article>
+            <!-- CHAT COLUMN -->
+            <div class="chat column is-three-fifths box is-fullheight" style="position: relative;">
+                <div class="tile is-vertical">
+                    <article class="message is-primary">
+                        <div class="message-body">
+                            <b>Guest: </b>this is what a chat looks like
+                        </div>
+                    </article>
+                </div>
+                    <!-- message action='createpost'
+                    label for message
+                    name = message
+                    button type = submit -->
+                <div class="tile" style="position: absolute; bottom: 0; padding: 5px;">
+                    <input class="input is-rounded" type="text" placeholder="Rounded input">
+                </div>
             </div>
-            <div class="users column">
+
+            <!-- REGISTRATION COLUMN -->
+            <div class="users column is-fullheight">
                 <form class="box register" action="/register" method="post">
                     <h1 class="title">Register</h1>
                     <div class="field">
@@ -37,14 +49,14 @@
                         <input class="input" type="text" name="username">
                     </div>
                     </div>
-                
+
                     <div class="field">
                     <label class="label">Password</label>
                     <div class="control">
                         <input class="input" type="password" name="password">
                     </div>
                     </div>
-                
+
                     <button class="button is-primary" value="Register" type="submit">Sign in</button>
                 </form>
                 <form class="box login" action="/login" method="post">
@@ -62,7 +74,7 @@
                         <input class="input" type="password" name="password">
                     </div>
                     </div>
-                
+
                     <button class="button is-primary" value="Login" type="submit">Sign in</button>
                 </form>
             </div>
