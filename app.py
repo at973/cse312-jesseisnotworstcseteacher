@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request
+from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request, jsonify
 import mysql.connector
 import bcrypt
 import secrets
@@ -81,13 +81,21 @@ def giveLogout():
 def createPost():
     #Create post should be called via html form
     auth = request.cookies.get('auth_token')
+    print("Auth is: " + str(auth))
     message = request.form.get('message')
+    print("Message is: " + str(message))
     message = message.replace("&", "&amp;") #Replaces & with html safe version
     message = message.replace(">", "&gt;") #Replaces > with html safe version
     message = message.replace("<", "&lt;") #Replaces < with html safe version
     message = message.replace("\"", "&quot;") #Replaces " with html safe version
     script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int PRIMARY KEY AUTO_INCREMENT)'
     mycursor.execute(script)
+    db.commit()
+
+
+    testCreate() #MUST REMOVE, JUST FOR TESTING!!!
+
+
     if auth is not None:
         script = 'SELECT * from Token where auth_token = %s'
         mycursor.execute(script, (auth,))
@@ -98,7 +106,30 @@ def createPost():
             username = mycursor.fetchone()[0] 
             script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
             mycursor.execute(script, (username, message))
-    db.commit() 
+            db.commit()
+    response = make_response(redirect(url_for('index'))) #Return 200
+    return response
+
+def testCreate():
+    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    mycursor.execute(script, ("Gamer1", "Message1"))
+    db.commit()
+    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    mycursor.execute(script, ("Gamer2", "Message2"))
+    db.commit()
+    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    mycursor.execute(script, ("Gamer3", "Message3"))
+    db.commit()
+
+@app.route('/messages', methods=['GET'])
+def readMessages():
+    script = 'SELECT username, message from Posts ORDER BY id DESC'
+    mycursor.execute(script)
+    data = mycursor.fetchall()
+    result = []
+    for line in data:
+        result.append({"message": line[0], "username": line[1], "id": str(line[0])})
+    return jsonify(result)
 
 def update(auth_token, username):
     mycursor.execute('UPDATE User SET auth_token = %s WHERE username = %s', (auth_token, username))
