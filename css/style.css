@@ -2,6 +2,8 @@ body {
   color: blue;
 }
 
-.column {
-  display: flex;
+#message {
+  position: absolute;
+  bottom: 0;
+  padding: 5px;
 }

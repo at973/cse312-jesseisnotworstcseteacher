@@ -34,9 +34,16 @@
                     label for message
                     name = message
                     button type = submit -->
-                <div class="tile" style="position: absolute; bottom: 0; padding: 5px;">
-                    <input class="input is-rounded" type="text" placeholder="Rounded input">
-                </div>
+                    <!-- This is a sample for how message form format must be-->
+                <form method="post" action = "/createpost">
+                    <div class="field is-horizontal" id="message" style="position: absolute; bottom: 0; padding: 5px;">
+                        <div class="field-label is-normal"><label class="label" for="message"> Message </label></div>
+                        <div class="field-body">
+                            <div class="field"><input class="input is-rounded" type="text" name="message"></div>
+                            <button type="submit"> Submit </button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
             <!-- REGISTRATION COLUMN -->
@@ -80,12 +87,4 @@
             </div>
         </div>
     </body>
-    <div class = "message">
-        <!-- This is a sample for how message form format must be-->
-        <form method="post" action = "/createpost">
-            <label for "message"> Message </label>
-            <input type = "text" name = "message"></input>
-            <button type = "submit" > Submit </button>
-        </form>
-    </div>
 </html>
