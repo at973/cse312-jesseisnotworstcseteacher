@@ -10,7 +10,7 @@ app = Flask(__name__)
 time.sleep(3)
 
 db = mysql.connector.connect(host='oursql', user='user', passwd='password', database='mysql')
-mycursor = db.cursor()
+mycursor = db.cursor(buffered=True)
 
 @app.route('/') #Returns templates/index.html
 def index():
@@ -56,7 +56,7 @@ def giveLogin():
     username = request.form.get('username')
     password = request.form.get('password')
     mycursor.execute('CREATE Table IF NOT EXISTS User (username VARCHAR(20), password VARCHAR(100), auth_token VARCHAR(100), ID int PRIMARY KEY AUTO_INCREMENT)')
-    mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token VARCHAR, exist BOOLEAN)')
+    mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token VARCHAR(100), exist BOOL)')
     mycursor.execute('SELECT * FROM User')
     auth_token = secrets.token_hex(20)
     hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
@@ -88,7 +88,7 @@ def createPost():
     message = message.replace(">", "&gt;") #Replaces > with html safe version
     message = message.replace("<", "&lt;") #Replaces < with html safe version
     message = message.replace("\"", "&quot;") #Replaces " with html safe version
-    script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int PRIMARY KEY AUTO_INCREMENT)'
+    script = 'CREATE Table if not exists Posts (username VARCHAR(20), message MEDIUMTEXT, ID int PRIMARY KEY AUTO_INCREMENT)'
     mycursor.execute(script)
     db.commit()
 
@@ -104,20 +104,23 @@ def createPost():
             script = 'Select username from User where auth_token = %s'
             mycursor.execute(script, (auth,))
             username = mycursor.fetchone()[0] 
-            script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+            script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
             mycursor.execute(script, (username, message))
             db.commit()
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
 
 def testCreate():
-    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    # script = ('INSERT INTO Posts'
+    #           '(username, message) '
+    #           'VALUES(%s, %s)')
+    script = 'INSERT into Posts (username, message) VALUES(%s, %s);'
     mycursor.execute(script, ("Gamer1", "Message1"))
     db.commit()
-    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
     mycursor.execute(script, ("Gamer2", "Message2"))
     db.commit()
-    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
     mycursor.execute(script, ("Gamer3", "Message3"))
     db.commit()
 
@@ -128,7 +131,9 @@ def readMessages():
     data = mycursor.fetchall()
     result = []
     for line in data:
-        result.append({"message": line[0], "username": line[1], "id": str(line[0])})
+        result.append({"message": line[1], "username": line[0], "id": str(line[0]) + str(line[1])})
+        # result.append({"message": line[1], "username": line[0], "id": line[3]})
+    print('/messages returned this: ', result)
     return jsonify(result)
 
 def update(auth_token, username):
