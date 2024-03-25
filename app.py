@@ -10,26 +10,24 @@ app = Flask(__name__)
 time.sleep(3)
 
 db = mysql.connector.connect(host='oursql', user='user', passwd='password', database='mysql')
-mycursor = db.cursor()
+mycursor = db.cursor(buffered=True)
 
 @app.route('/') #Returns templates/index.html
 def index():
     if 'auth_token' in request.cookies:
-        hashed_auth = hashlib.sha256(request.cookies.get('auth_token').encode()).hexdigest
-        mycursor.execute('SELECT * FROM User')
-        for i in mycursor:
-            if i[2]:
-                if i[2] == hashed_auth:
-                    mycursor.execute('SELECT * FROM Token')
-                    for i in mycursor:
-                        if i[0]:
-                            if i[0] == hashed_auth:
-                                if i[1]:            
-                                    f = open("templates/index.html", "rb")
-                                    body = f.read()
-                                    stringbody = body.decode()
-                                    stringbody = stringbody.replace('Not Logged In', i[0])
-                                    return make_response(stringbody)
+        hashed_auth = hashlib.sha256(request.cookies.get('auth_token').encode()).hexdigest()
+        mycursor.execute('SELECT * FROM User WHERE auth_token = %s', (hashed_auth,))
+        user = mycursor.fetchone()
+        if user:
+            username = user[0]
+            mycursor.execute('SELECT * FROM Token WHERE auth_token = %s', (hashed_auth,))
+            token = mycursor.fetchone()
+            if token:
+                if token[1]:
+                    with open("templates/index.html", "r") as f:
+                        stringbody = f.read()
+                        stringbody = stringbody.replace('Guest', username)
+                    return make_response(stringbody)
     return render_template('index.html')
 
 @app.route('/register', methods=['POST'])
@@ -55,27 +53,50 @@ def giveLogin():
     response = make_response(redirect(url_for('index')))
     username = request.form.get('username')
     password = request.form.get('password')
-    mycursor.execute('CREATE Table IF NOT EXISTS User (username VARCHAR(20), password VARCHAR(100), auth_token VARCHAR(100), ID int PRIMARY KEY AUTO_INCREMENT)')
-    mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token VARCHAR, exist BOOLEAN)')
-    mycursor.execute('SELECT * FROM User')
-    auth_token = secrets.token_hex(20)
-    hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
-    mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
-    for i in mycursor:
-        if i[0] == username and bcrypt.checkpw(i[1].encode(), password):
-            update(hashed_auth, username)
-            response.set_cookie('auth_token', auth_token, max_age=7200)
-            return response
-    return response
+    userTable = table_exist('User')
+    tokenTable = table_exist('Token')
+    if userTable and tokenTable:
+        mycursor.execute('SELECT * FROM User')
+        auth_token = secrets.token_hex(20)
+        hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
+        mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s, %s)', (hashed_auth, True))
+        mycursor.execute('SELECT * FROM User WHERE username = %s', (username,))
+        exist = mycursor.fetchone()
+        if exist:
+            hashed_password = exist[1]
+            if bcrypt.checkpw(password.encode(), hashed_password.encode()):
+                update(hashed_auth, username)
+                response.set_cookie('auth_token', auth_token, max_age=7200)
+                return response
+        return response
+    else:
+        if not userTable:
+            mycursor.execute('CREATE Table IF NOT EXISTS User (username VARCHAR(20), password VARCHAR(100), auth_token VARCHAR(100), ID int PRIMARY KEY AUTO_INCREMENT)')
+        if not tokenTable:
+            mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token VARCHAR(100), exist BOOLEAN)')
+        mycursor.execute('SELECT * FROM User')
+        auth_token = secrets.token_hex(20)
+        hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
+        mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
+        mycursor.execute('SELECT * FROM User WHERE username = %s', username)
+        exist = mycursor.fetchone()
+        if exist:
+            hashed_password = exist['password']
+            if bcrypt.checkpw(password.encode(), hashed_password):
+                update(hashed_auth, username)
+                response.set_cookie('auth_token', auth_token, max_age=7200)
+                return response
+        return response
 
 @app.route('/logout', methods=['POST'])
 def giveLogout():
+    response = make_response(redirect(url_for('index')))
     if 'auth_token' in request.cookies:
         auth_token = request.cookies.get('auth_token')
         hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
         update_token(hashed_auth)
-        request.cookies.pop('auth_token')
-    return make_response(redirect(url_for('index')))
+        response.set_cookie('auth_token', '', expires=0)
+    return response
 
 @app.route('/createpost', methods=['POST'])
 def createPost():
@@ -138,6 +159,13 @@ def update(auth_token, username):
 def update_token(auth_token):
     mycursor.execute('UPDATE Token SET exist = %s WHERE auth_token = %s', (False, auth_token))
     db.commit 
+
+def table_exist(name: str):
+    mycursor.execute("SHOW TABLES LIKE '" + name + "'")
+    table = mycursor.fetchone()
+    if table:
+        return True
+    return False
 
 
 @app.route('/css/<css>') #Returns any file from css directory
