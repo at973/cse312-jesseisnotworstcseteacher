@@ -109,12 +109,14 @@ def createPost():
     message = message.replace(">", "&gt;") #Replaces > with html safe version
     message = message.replace("<", "&lt;") #Replaces < with html safe version
     message = message.replace("\"", "&quot;") #Replaces " with html safe version
-    script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int PRIMARY KEY AUTO_INCREMENT)'
-    mycursor.execute(script)
-    db.commit()
+
+    if not table_exist('Posts'):
+        script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        mycursor.execute(script)
+        db.commit()
 
 
-    testCreate() #MUST REMOVE, JUST FOR TESTING!!!
+    # testCreate() #MUST REMOVE, JUST FOR TESTING!!!
 
 
     if auth is not None:
@@ -125,20 +127,20 @@ def createPost():
             script = 'Select username from User where auth_token = %s'
             mycursor.execute(script, (auth,))
             username = mycursor.fetchone()[0] 
-            script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+            script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
             mycursor.execute(script, (username, message))
             db.commit()
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
 
 def testCreate():
-    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
     mycursor.execute(script, ("Gamer1", "Message1"))
     db.commit()
-    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
     mycursor.execute(script, ("Gamer2", "Message2"))
     db.commit()
-    script = 'INSERT into Posts (username, message), VALUES(%s, %s)'
+    script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
     mycursor.execute(script, ("Gamer3", "Message3"))
     db.commit()
 
