@@ -59,12 +59,12 @@ def giveLogin():
         mycursor.execute('SELECT * FROM User')
         auth_token = secrets.token_hex(20)
         hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
-        mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s, %s)', (hashed_auth, True))
         mycursor.execute('SELECT * FROM User WHERE username = %s', (username,))
         exist = mycursor.fetchone()
         if exist:
             hashed_password = exist[1]
             if bcrypt.checkpw(password.encode(), hashed_password.encode()):
+                mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s, %s)', (hashed_auth, True))
                 update(hashed_auth, username)
                 response.set_cookie('auth_token', auth_token, max_age=7200)
                 return response
@@ -77,12 +77,12 @@ def giveLogin():
         mycursor.execute('SELECT * FROM User')
         auth_token = secrets.token_hex(20)
         hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
-        mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
         mycursor.execute('SELECT * FROM User WHERE username = %s', (username,))
         exist = mycursor.fetchone()
         if exist:
             hashed_password = exist['password']
             if bcrypt.checkpw(password.encode(), hashed_password):
+                mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
                 update(hashed_auth, username)
                 response.set_cookie('auth_token', auth_token, max_age=7200)
                 return response
@@ -115,9 +115,7 @@ def createPost():
         mycursor.execute(script)
         db.commit()
 
-
     # testCreate() #MUST REMOVE, JUST FOR TESTING!!!
-
 
     if auth is not None:
         hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
@@ -129,7 +127,7 @@ def createPost():
         data = mycursor.fetchone() #data[0] = auth_token data[1] = exist
         if data[1] == True: #If auth token and proper auth token, create post
             script = 'Select username from User where auth_token = %s'
-            mycursor.execute(script, (auth,))
+            mycursor.execute(script, (hashed_auth,))
             username = mycursor.fetchone()
             if username is not None:
                 script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
