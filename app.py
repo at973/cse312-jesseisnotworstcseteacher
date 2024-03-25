@@ -151,6 +151,40 @@ def createPost():
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
 
+
+@app.route('/like', methods=['POST'])
+def createLike():
+    #Create post should be called via html form
+    auth = request.cookies.get('auth_token')
+    id = request.form.get('id')
+    if not table_exist('Likes'):
+        mycursor.execute('CREATE Table IF NOT EXISTS Likes (ID int, auth_token VARCHAR(100))')
+        db.commit()
+
+    if auth is not None and id is not None:
+        hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
+        script = 'SELECT * from Likes WHERE ID = %s'
+        mycursor.execute(script, (id,))
+        data = mycursor.fetchall()
+        for line in data:
+            if line[1] == hashed_auth:
+                response = make_response(redirect(url_for('index'))) #Return 200
+                return response
+        mycursor.execute('SELECT * from Token')
+        script = 'SELECT * from Token where auth_token = %s'
+        mycursor.execute(script, (hashed_auth,))
+        data = mycursor.fetchone() #data[0] = auth_token data[1] = exist
+        if data[1] == True: #If auth token and proper auth token, create post
+            script = 'Select username from User where auth_token = %s'
+            mycursor.execute(script, (hashed_auth,))
+            username = mycursor.fetchone()
+            if username is not None:
+                script = 'INSERT into Likes (ID, auth_token) VALUES(%s, %s)'
+                mycursor.execute(script, (id, hashed_auth,))
+                db.commit()
+    response = make_response(redirect(url_for('index'))) #Return 200
+    return response
+
 def testCreate():
     script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
     mycursor.execute(script, ("Gamer1", "Message1"))
@@ -162,14 +196,21 @@ def testCreate():
     mycursor.execute(script, ("Gamer3", "Message3"))
     db.commit()
 
+def fetchLikes(id):
+    script = 'SELECT * from Likes WHERE ID = %s'
+    mycursor.execute(script, (id,))
+    data = mycursor.fetchall()
+    likes = len(data)
+    return likes
+
 @app.route('/messages', methods=['GET'])
 def readMessages():
-    script = 'SELECT username, message from Posts ORDER BY id DESC'
+    script = 'SELECT username, message, id from Posts ORDER BY id DESC'
     mycursor.execute(script)
     data = mycursor.fetchall()
     result = []
     for line in data:
-        result.append({"message": line[1], "username": line[0], "id": str(line[0]) + str(line[1])})
+        result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2]))})
         # result.append({"message": line[1], "username": line[0], "id": line[3]})
     return jsonify(result)
 

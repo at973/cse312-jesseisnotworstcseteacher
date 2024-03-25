@@ -2,12 +2,18 @@ function newChat(chatJSON) {
     const username = chatJSON.username;
     const message = chatJSON.message;
     const id = chatJSON.id;
+    const likes = chatJSON.likes;
     const message_html = 
         `<div class="tile is-vertical m-2 sent-message-box">
             <article class="message is-primary" id=${id}>
                 <div class="message-body"><b>${username}: </b> ${message} </div>
             </article>
-        </div>
+            <label>${likes} Likes <\label>
+            <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
+                <input value = "${id}" type="hidden" name="id">
+                <input type="submit" value="Like">
+            </form>
+        <\div>
         `;
     return message_html;
 }
