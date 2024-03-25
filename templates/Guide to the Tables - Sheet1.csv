@@ -1,0 +1,9 @@
+Table: User,,,
+username: varchar(20),password: varchar(100),auth_token: varchar(100),ID
+,,,
+,,,
+Table: Token,,,
+auth_token: varchar(100),exist: boolean,,
+,,,
+Table: Posts,,,
+username: varchar(20),message: text,ID,

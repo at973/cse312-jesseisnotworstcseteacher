@@ -14,6 +14,7 @@ mycursor = db.cursor(buffered=True)
 
 @app.route('/') #Returns templates/index.html
 def index():
+    username='guest'
     if 'auth_token' in request.cookies:
         hashed_auth = hashlib.sha256(request.cookies.get('auth_token').encode()).hexdigest()
         mycursor.execute('SELECT * FROM User WHERE auth_token = %s', (hashed_auth,))
@@ -22,13 +23,13 @@ def index():
             username = user[0]
             mycursor.execute('SELECT * FROM Token WHERE auth_token = %s', (hashed_auth,))
             token = mycursor.fetchone()
-            if token:
-                if token[1]:
-                    with open("templates/index.html", "r") as f:
-                        stringbody = f.read()
-                        stringbody = stringbody.replace('Guest', username)
-                    return make_response(stringbody)
-    return render_template('index.html')
+            # if token:
+            #     if token[1]:
+            #         with open("templates/index.html", "r") as f:
+            #             stringbody = f.read()
+            #             stringbody = stringbody.replace('Guest', username)
+            #         return make_response(stringbody)
+    return render_template('index.html', username=username)
 
 @app.route('/register', methods=['POST'])
 def giveRegister():

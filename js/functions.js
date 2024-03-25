@@ -42,5 +42,6 @@ function generateTestChats() {
 
 function welcome() {
     // generateTestChats();  // Line is only here for tests
+    updateChat();
     setInterval(updateChat, 5000);
 }
