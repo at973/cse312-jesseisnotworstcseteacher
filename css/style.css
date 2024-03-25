@@ -7,3 +7,33 @@ body {
   bottom: 0;
   padding: 5px;
 }
+
+#chatbox {
+  overflow: scroll;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--bulma-navbar-height) - 10vh);
+  /* height: 70vh; */
+  /* bottom: 100%; */
+}
+
+#chatbox > div {
+  flex: 1;
+}
+
+/* #send-message-box {
+  position: absolute;
+  bottom: 2px;
+} */
+
+.sent-message-box {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+#chat-column {
+  /* position: sticky; */
+  bottom: 2px;
+}
