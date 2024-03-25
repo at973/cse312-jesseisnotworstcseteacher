@@ -78,7 +78,7 @@ def giveLogin():
         auth_token = secrets.token_hex(20)
         hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
         mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
-        mycursor.execute('SELECT * FROM User WHERE username = %s', username)
+        mycursor.execute('SELECT * FROM User WHERE username = %s', (username,))
         exist = mycursor.fetchone()
         if exist:
             hashed_password = exist['password']
@@ -120,16 +120,22 @@ def createPost():
 
 
     if auth is not None:
+        hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
+        print("Hashed auth is: " + str(hashed_auth))
+        mycursor.execute('SELECT * from Token')
+        print(mycursor.fetchall())
         script = 'SELECT * from Token where auth_token = %s'
-        mycursor.execute(script, (auth,))
+        mycursor.execute(script, (hashed_auth,))
         data = mycursor.fetchone() #data[0] = auth_token data[1] = exist
         if data[1] == True: #If auth token and proper auth token, create post
             script = 'Select username from User where auth_token = %s'
             mycursor.execute(script, (auth,))
-            username = mycursor.fetchone()[0] 
-            script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
-            mycursor.execute(script, (username, message))
-            db.commit()
+            username = mycursor.fetchone()
+            if username is not None:
+                script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
+                username = username[0]
+                mycursor.execute(script, (username, message))
+                db.commit()
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
 
