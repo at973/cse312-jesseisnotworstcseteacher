@@ -8,4 +8,5 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 EXPOSE 8080
 COPY . .
+COPY --from=ghcr.io/ufoscout/docker-compose-wait:latest /wait /wait
 CMD python -u app.py

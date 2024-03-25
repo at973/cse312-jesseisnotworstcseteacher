@@ -33,15 +33,17 @@ function updateChat() {
 
 function generateTestChats() {
     chats = '';
-    for(let i = 0; i < 50; i++) {
+    for(let i = 0; i < 1; i++) {
+        longmsg = "this is a ridiculously long message in an attempt to try to see if anything would happen if the string were to take up additional lines, and potentially break the display. If something looks broken, that means that you did something wrong, and that's unfortunate :(";
         chats += newChat({username: 'guest', message: 'this is just a test', id: i});
+        chats += newChat({username: 'guest', message: longmsg, id: i});
     }
     console.log('chats', chats);
     document.getElementById('chatbox').innerHTML = chats;
 }
 
 function welcome() {
-    // generateTestChats();  // Line is only here for tests
+    generateTestChats();  // Line is only here for tests
     updateChat();
     setInterval(updateChat, 5000);
 }

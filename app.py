@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request, jsonify
+from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request, jsonify, Response
 import mysql.connector
 import bcrypt
 import secrets
@@ -12,6 +12,11 @@ time.sleep(3)
 db = mysql.connector.connect(host='oursql', user='user', passwd='password', database='mysql')
 mycursor = db.cursor(buffered=True)
 
+@app.after_request
+def after_request(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
+
 @app.route('/') #Returns templates/index.html
 def index():
     username='guest'
@@ -19,6 +24,9 @@ def index():
         hashed_auth = hashlib.sha256(request.cookies.get('auth_token').encode()).hexdigest()
         mycursor.execute('SELECT * FROM User WHERE auth_token = %s', (hashed_auth,))
         user = mycursor.fetchone()
+        mycursor.execute('SELECT * FROM User')
+        print("fuck it, here's the whole database", mycursor.fetchall())
+        print('username displayed: ', user, 'auth_token received:', hashed_auth)
         if user:
             username = user[0]
             mycursor.execute('SELECT * FROM Token WHERE auth_token = %s', (hashed_auth,))
@@ -29,7 +37,9 @@ def index():
             #             stringbody = f.read()
             #             stringbody = stringbody.replace('Guest', username)
             #         return make_response(stringbody)
-    return render_template('index.html', username=username)
+    response =  Response(render_template('index.html', username=username))
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
 
 @app.route('/register', methods=['POST'])
 def giveRegister():
@@ -47,6 +57,9 @@ def giveRegister():
         if exist == False:
             mycursor.execute('INSERT INTO User (username, password, auth_token) VALUES(%s,%s, %s)', (username, hashed_password, 'no auth'))
         db.commit()
+    # response = Response(redirect(url_for('index')))
+    # response.headers['X-Content-Type-Options'] = 'nosniff'
+    # return response
     return redirect(url_for('index'))
 
 @app.route('/login', methods=['POST'])
@@ -158,7 +171,6 @@ def readMessages():
     for line in data:
         result.append({"message": line[1], "username": line[0], "id": str(line[0]) + str(line[1])})
         # result.append({"message": line[1], "username": line[0], "id": line[3]})
-    print('/messages returned this: ', result)
     return jsonify(result)
 
 def update(auth_token, username):
