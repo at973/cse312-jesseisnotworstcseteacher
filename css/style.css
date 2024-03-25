@@ -37,3 +37,7 @@ body {
   /* position: sticky; */
   bottom: 2px;
 }
+
+.logo {
+  height: 50px;
+}
