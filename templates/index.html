@@ -13,10 +13,11 @@
             <h1 class="title level-item has-text-centered">jesseisnotworstcseteacher </h1>
             <div class="level-item has-text-centered">
                 <div class="logout">
-                    <button class="button is-primary" action="/logout" 
-                        method="post" type="submit" value="Logout">
+                    <form action="/logout" method="post">
+                        <button class="button is-primary" type="submit">
                             Logout
-                    </button>
+                        </button>
+                    </form>
                 </div>
             </div>
         </nav>
@@ -44,6 +45,13 @@
                         <input class="input" type="password" name="password">
                     </div>
                     </div>
+
+                    <div class="field">
+                        <label class="label">Enter The Same Password</label>
+                        <div class="control">
+                            <input class="input" type="password" name="password2">
+                        </div>
+                        </div>
                 
                     <button class="button is-primary" value="Register" type="submit">Sign in</button>
                 </form>
