@@ -23,12 +23,18 @@
 } */
 
 .sent-message-box {
-  /* flex: 1;
+  /* flex: 1; */
   display: flex;
   justify-content: center;
-  flex-direction: column; */
+  flex-direction: column;
 }
-
+  
+.message-interaction-box {
+  float: right;
+  width: 19%;
+  display: flex;
+}
+  
 #chat-column {
   /* position: sticky; */
   bottom: 2px;

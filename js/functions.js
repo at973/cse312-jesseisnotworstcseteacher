@@ -7,12 +7,16 @@ function newChat(chatJSON) {
         `<div class="tile is-vertical m-2 sent-message-box">
             <article class="message is-primary" id=${id}>
                 <div class="message-body"><b>${username}: </b> ${message} </div>
+                <div class="tile is-horizontal m-2 message-interaction-box">
+                <div class="column"><label>${likes} Likes <\label></div>
+                    <div class="column">
+                        <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
+                            <input value = "${id}" type="hidden" name="id">
+                            <input type="submit" value="Like">
+                        </form>
+                    </div>
+                </div>
             </article>
-            <label>${likes} Likes <\label>
-            <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
-                <input value = "${id}" type="hidden" name="id">
-                <input type="submit" value="Like">
-            </form>
         <\div>
         `;
     return message_html;
@@ -49,7 +53,7 @@ function generateTestChats() {
 }
 
 function welcome() {
-    generateTestChats();  // Line is only here for tests
+    // generateTestChats();  // Line is only here for tests
     updateChat();
     setInterval(updateChat, 5000);
 }
