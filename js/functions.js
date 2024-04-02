@@ -6,19 +6,26 @@ function newChat(chatJSON) {
     const message_html = 
         `<div class="tile is-vertical m-2 sent-message-box">
             <article class="message is-primary" id=${id}>
-                <div class="message-body"><b>${username}: </b> ${message} </div>
-                <div class="tile is-horizontal m-2 message-interaction-box">
-                <div class="column"><label>${likes} Likes <\label></div>
-                    <div class="column">
-                        <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
-                            <input value = "${id}" type="hidden" name="id">
-                            <input type="submit" value="Like">
-                        </form>
+                <div class="message-body">
+                    <b>${username}: </b> ${message} <br><br>
+                    <div class="is-horizontal m-2 message-interaction-box">
+                        <div class="column"><label>${likes} Likes</label></div>
+                            <div class="column">
+                                <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
+                                    <input value = "${id}" type="hidden" name="id">
+                                    <buttom type="submit" value="Like" class="button is-ghost">
+                                        <span class="icon-text">
+                                            <span class="icon"><i class="fa-solid fa-thumbs-up"></i></span>
+                                            <span> Like </span>
+                                        </span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </article>
-        <\div>
-        `;
+        </div>`;
     return message_html;
 }
 
