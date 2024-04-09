@@ -3,23 +3,59 @@ function newChat(chatJSON) {
     const message = chatJSON.message;
     const id = chatJSON.id;
     const likes = chatJSON.likes;
-    const message_html = 
-        `<div class="tile is-vertical m-2 sent-message-box">
-            <article class="message is-primary" id=${id}>
-                <div class="message-body"><b>${username}: </b> ${message} </div>
-                <div class="tile is-horizontal m-2 message-interaction-box">
-                <div class="column"><label>${likes} Likes <\label></div>
-                    <div class="column">
-                        <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
-                            <input value = "${id}" type="hidden" name="id">
-                            <input type="submit" value="Like">
-                        </form>
-                    </div>
+    const new_message_html =
+        `<article class="media">
+            <figure class="media-left">
+                <p class="image is-64x64">
+                    <img src="images/default-icon.png" />
+                </p>
+            </figure>
+            <div class="media-content">
+                <div class="content">
+                    <p> <strong> ${username} </strong> </p>
+                    ${message}
                 </div>
-            </article>
-        <\div>
-        `;
-    return message_html;
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
+                                <input value = "${id}" type="hidden" name="id">
+                                <buttom type="submit" value="Like" class="button is-ghost">
+                                    <span class="icon-text">
+                                        <span class="icon"><i class="fa-solid fa-thumbs-up"></i></span>
+                                        <span> Like </span>
+                                    </span>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="level-item">
+                            <label>${likes}</label>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                    <form action="/upload" method="POST" enctype="multipart/form-data">
+                        <div class="level-item">
+                            <div class="file">
+                                <label class="file-label">
+                                    <input class="file-input" type="file" name="file" />
+                                    <span class="file-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="level-item" style="margin: 3px">
+                            <button type="submit" class="button is-primary">Add photo to collection</button>
+                        </div>
+                    </form>
+                    </div>
+                </nav>
+                <a href="direct_message">
+                    <button class="dm-button" style="background-color: #dddddd;color: black;border: 1px solid black;position: relative;top: -110px; right:-650px">DM</button>
+                </a>
+            </div>
+        </article>`;
+    return new_message_html;
 }
 
 function clearChat() {
