@@ -13,6 +13,9 @@ function newChat(chatJSON) {
                 <input value = "${id}" type="hidden" name="id">
                 <input type="submit" value="Like">
             </form>
+            <a href="direct_message">
+                <button class="dm-button" style="background-color: #dddddd;color: black;border: 1px solid black;position: relative;top: -110px; right:-650px">DM</button>
+            </a>
         <\div>
         `;
     return message_html;
