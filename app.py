@@ -4,6 +4,7 @@ import bcrypt
 import secrets
 import hashlib
 import time 
+import os
 
 app = Flask(__name__)
 
@@ -253,6 +254,15 @@ def table_exist(name: str):
         return True
     return False
 
+@app.route('/upload/<filename>', methods=['POST'])
+def uploadFile(filename):
+    file = request.files['file']
+    file.save(os.path.join('/public/', filename))
+    return redirect("/", code=200)
+
+@app.route('/userUploads/<filename>')
+def giveUserFile(filename):
+    return send_from_directory("/public/", filename)
 
 @app.route('/css/<css>') #Returns any file from css directory
 def giveCSS(css):
