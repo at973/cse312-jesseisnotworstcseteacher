@@ -4,6 +4,8 @@ import bcrypt
 import secrets
 import hashlib
 import time 
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -30,7 +32,7 @@ def index():
     if 'auth_token' in request.cookies:
         hashed_auth = hashlib.sha256(request.cookies.get('auth_token').encode()).hexdigest()
         if (not table_exist('User')):
-            mycursor.execute('CREATE Table IF NOT EXISTS User (username VARCHAR(20), password VARCHAR(100), auth_token VARCHAR(100), ID int PRIMARY KEY AUTO_INCREMENT)')
+            mycursor.execute('CREATE Table IF NOT EXISTS User (username TEXT, password TEXT, auth_token TEXT, ID int PRIMARY KEY AUTO_INCREMENT)')
             db.commit()
         mycursor.execute('SELECT * FROM User WHERE auth_token = %s', (hashed_auth,))
         user = mycursor.fetchone()
@@ -62,7 +64,7 @@ def giveRegister():
     if password == same_password:
         hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         if (not table_exist('User')):
-            mycursor.execute('CREATE Table IF NOT EXISTS User (username VARCHAR(20), password VARCHAR(100), auth_token VARCHAR(100), ID int PRIMARY KEY AUTO_INCREMENT)')
+            mycursor.execute('CREATE Table IF NOT EXISTS User (username TEXT, password TEXT, auth_token TEXT, ID int PRIMARY KEY AUTO_INCREMENT)')
             db.commit()
         mycursor.execute('SELECT * FROM User')
         exist = False
@@ -100,10 +102,10 @@ def giveLogin():
         return response
     else:
         if not userTable:
-            mycursor.execute('CREATE Table IF NOT EXISTS User (username VARCHAR(20), password VARCHAR(100), auth_token VARCHAR(100), ID int PRIMARY KEY AUTO_INCREMENT)')
+            mycursor.execute('CREATE Table IF NOT EXISTS User (username TEXT, password TEXT, auth_token TEXT, ID int PRIMARY KEY AUTO_INCREMENT)')
             db.commit()
         if not tokenTable:
-            mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token VARCHAR(100), exist BOOLEAN)')
+            mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
             db.commit()
         mycursor.execute('SELECT * FROM User')
         auth_token = secrets.token_hex(20)
@@ -142,7 +144,7 @@ def createPost():
     message = message.replace("\"", "&quot;") #Replaces " with html safe version
 
     if not table_exist('Posts'):
-        script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
         mycursor.execute(script)
         db.commit()
 
@@ -152,7 +154,7 @@ def createPost():
         hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
         print("Hashed auth is: " + str(hashed_auth))
         if not table_exist("Token"):
-            mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token VARCHAR(100), exist BOOLEAN)')
+            mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
             db.commit()
         mycursor.execute('SELECT * from Token')
         print(mycursor.fetchall())
@@ -180,7 +182,7 @@ def createLike():
     auth = request.cookies.get('auth_token')
     id = request.form.get('id')
     if not table_exist('Likes'):
-        mycursor.execute('CREATE Table IF NOT EXISTS Likes (ID int, username VARCHAR(100))')
+        mycursor.execute('CREATE Table IF NOT EXISTS Likes (ID int, username TEXT)')
         db.commit()
 
     if auth is not None and id is not None:
@@ -230,7 +232,7 @@ def fetchLikes(id):
 @app.route('/messages', methods=['GET'])
 def readMessages():
     if not table_exist('Posts'):
-        script = 'CREATE Table if not exists Posts (username VARCHAR(20), message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
         mycursor.execute(script)
         db.commit()
     script = 'SELECT username, message, id from Posts ORDER BY id DESC'
@@ -257,6 +259,16 @@ def table_exist(name: str):
         return True
     return False
 
+@app.route('/upload', methods=['POST'])
+def uploadFile():
+    file = request.files['file']
+    fileName = file.filename
+    file.save(os.path.join('public', fileName))
+    return redirect("/", code=200)
+
+@app.route('/userUploads/<filename>')
+def giveUserFile(filename):
+    return send_from_directory("public", filename)
 
 @app.route('/css/<css>') #Returns any file from css directory
 def giveCSS(css):
