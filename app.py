@@ -50,6 +50,10 @@ def index():
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
 
+@app.route('/direct_message')
+def dm():
+    return Response(render_template('direct_message.html'))
+
 @app.route('/register', methods=['POST'])
 def giveRegister():
     username = request.form.get('username')
