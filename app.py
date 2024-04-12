@@ -69,7 +69,6 @@ def giveRegister():
         if (not table_exist('User')):
             mycursor.execute('CREATE Table IF NOT EXISTS User (username TEXT, password TEXT, auth_token TEXT, ID int PRIMARY KEY AUTO_INCREMENT)')
             db.commit()
-        mycursor.execute('SELECT * FROM User')
         exist = False
         for i in mycursor:
             if i[0] == username:
@@ -159,7 +158,6 @@ def createPost():
         if not table_exist("Token"):
             mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
             db.commit()
-        mycursor.execute('SELECT * from Token')
         script = 'SELECT * from Token where auth_token = %s'
         mycursor.execute(script, (hashed_auth,))
         data = mycursor.fetchall() #data[0] = auth_token data[1] = exist
