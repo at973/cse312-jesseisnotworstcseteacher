@@ -180,7 +180,6 @@ def createPost():
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
 
-
 @app.route('/like', methods=['POST'])
 def createLike():
     #Create post should be called via html form
@@ -269,12 +268,16 @@ def table_exist(name: str):
 @app.route('/upload', methods=['POST'])
 def uploadFile():
     file = request.files['file']
-    fileName = file.filename
-    file.save('/code/public/' + fileName)
-    return redirect("/", code=200)
+    if file is not None:
+        fileName = secure_filename(file.filename)
+        fileExtension = fileName.rsplit('.', 1)[1].lower()
+        if fileExtension in ALLOWED_EXTENSIONS:
+            file.save('/code/public/' + fileName)
+    return redirect("/", code=302)
 
 @app.route('/userUploads/<filename>')
 def giveUserFile(filename):
+    fileName = secure_filename(filename)
     print("The filename is: " + filename)
     return send_from_directory("public", filename)
 
