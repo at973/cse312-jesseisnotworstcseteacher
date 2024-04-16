@@ -19,7 +19,7 @@ while not success:
         success = True
     except:
         pass
-mycursor = db.cursor(buffered=True)
+mycursor = db.cursor()
 
 @app.after_request
 def after_request(response):
@@ -35,22 +35,31 @@ def index():
             mycursor.execute('CREATE Table IF NOT EXISTS User (username TEXT, password TEXT, auth_token TEXT, ID int PRIMARY KEY AUTO_INCREMENT)')
             db.commit()
         mycursor.execute('SELECT * FROM User WHERE auth_token = %s', (hashed_auth,))
-        user = mycursor.fetchone()
-        # print("fuck it, here's the whole database", mycursor.fetchall())
-        # print('username displayed: ', user, 'auth_token received:', hashed_auth)
-        if user:
+        user = mycursor.fetchall()
+        if len(user) != 0:
+            user = user[0]
             username = user[0]
             mycursor.execute('SELECT * FROM Token WHERE auth_token = %s', (hashed_auth,))
-            token = mycursor.fetchone()
+            token = mycursor.fetchall()[0]
             # if token:
             #     if token[1]:
             #         with open("templates/index.html", "r") as f:
             #             stringbody = f.read()
             #             stringbody = stringbody.replace('Guest', username)
             #         return make_response(stringbody)
+        else: 
+            # ERROR
+            username = "Guest"
+        # print("fuck it, here's the whole database", mycursor.fetchall())
+        # print('username displayed: ', user, 'auth_token received:', hashed_auth)
+
     response =  Response(render_template('index.html', username=username))
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
+
+@app.route('/direct_message')
+def dm():
+    return Response(render_template('direct_message.html'))
 
 @app.route('/register', methods=['POST'])
 def giveRegister():
@@ -62,7 +71,6 @@ def giveRegister():
         if (not table_exist('User')):
             mycursor.execute('CREATE Table IF NOT EXISTS User (username TEXT, password TEXT, auth_token TEXT, ID int PRIMARY KEY AUTO_INCREMENT)')
             db.commit()
-        mycursor.execute('SELECT * FROM User')
         exist = False
         for i in mycursor:
             if i[0] == username:
@@ -83,12 +91,12 @@ def giveLogin():
     userTable = table_exist('User')
     tokenTable = table_exist('Token')
     if userTable and tokenTable:
-        mycursor.execute('SELECT * FROM User')
         auth_token = secrets.token_hex(20)
         hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
         mycursor.execute('SELECT * FROM User WHERE username = %s', (username,))
-        exist = mycursor.fetchone()
-        if exist:
+        exist = mycursor.fetchall()
+        if len(exist) != 0:
+            exist = exist[0]
             hashed_password = exist[1]
             if bcrypt.checkpw(password.encode(), hashed_password.encode()):
                 mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s, %s)', (hashed_auth, True))
@@ -103,12 +111,12 @@ def giveLogin():
         if not tokenTable:
             mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
             db.commit()
-        mycursor.execute('SELECT * FROM User')
         auth_token = secrets.token_hex(20)
         hashed_auth = hashlib.sha256(auth_token.encode()).hexdigest()
         mycursor.execute('SELECT * FROM User WHERE username = %s', (username,))
-        exist = mycursor.fetchone()
-        if exist:
+        exist = mycursor.fetchall()
+        if len(exist) != 0:
+            exist = exist[0]
             hashed_password = exist['password']
             if bcrypt.checkpw(password.encode(), hashed_password):
                 mycursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
@@ -152,18 +160,18 @@ def createPost():
         if not table_exist("Token"):
             mycursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
             db.commit()
-        mycursor.execute('SELECT * from Token')
-        print(mycursor.fetchall())
         script = 'SELECT * from Token where auth_token = %s'
         mycursor.execute(script, (hashed_auth,))
-        data = mycursor.fetchone() #data[0] = auth_token data[1] = exist
-        if data != None:
+        data = mycursor.fetchall() #data[0] = auth_token data[1] = exist
+        if len(data) != 0:
+            data = data[0]
             print(data)
             if data[1] == True: #If auth token and proper auth token, create post
                 script = 'Select username from User where auth_token = %s'
                 mycursor.execute(script, (hashed_auth,))
-                username = mycursor.fetchone()
-                if username is not None:
+                username = mycursor.fetchall()
+                if len(username) != 0:
+                    username = username[0]
                     script = 'INSERT into Posts (username, message) VALUES(%s, %s)'
                     username = username[0]
                     mycursor.execute(script, (username, message))
@@ -183,15 +191,17 @@ def createLike():
 
     if auth is not None and id is not None:
         hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
-        mycursor.execute('SELECT * from Token')
         script = 'SELECT * from Token where auth_token = %s'
         mycursor.execute(script, (hashed_auth,))
-        data = mycursor.fetchone() #data[0] = auth_token data[1] = exist
+        data = mycursor.fetchall() #data[0] = auth_token data[1] = exist
+        if len(data) != 0:
+            data = data[1]
         if data[1] == True: #If auth token and proper auth token, create post
             script = 'Select username from User where auth_token = %s'
             mycursor.execute(script, (hashed_auth,))
-            username = mycursor.fetchone()
-            if username is not None:
+            username = mycursor.fetchall()
+            if len(username) != 0:
+                username = username[0]
                 script = 'SELECT * from Likes WHERE ID = %s'
                 mycursor.execute(script, (id,))
                 data = mycursor.fetchall()
@@ -250,8 +260,8 @@ def update_token(auth_token):
 
 def table_exist(name: str):
     mycursor.execute("SHOW TABLES LIKE '" + name + "'")
-    table = mycursor.fetchone()
-    if table:
+    table = mycursor.fetchall()
+    if len(table) != 0:
         return True
     return False
 
