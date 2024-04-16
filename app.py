@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 success = False
 
@@ -269,11 +270,12 @@ def table_exist(name: str):
 def uploadFile():
     file = request.files['file']
     fileName = file.filename
-    file.save(os.path.join('public', fileName))
+    file.save('/code/public/' + fileName)
     return redirect("/", code=200)
 
 @app.route('/userUploads/<filename>')
 def giveUserFile(filename):
+    print("The filename is: " + filename)
     return send_from_directory("public", filename)
 
 @app.route('/css/<css>') #Returns any file from css directory
