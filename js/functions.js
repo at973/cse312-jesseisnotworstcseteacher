@@ -50,8 +50,8 @@ function newChat(chatJSON) {
                     </form>
                     </div>
                 </nav>
-                <a href="direct_message">
-                    <button class="dm-button" style="background-color: #dddddd;color: black;border: 1px solid black;position: relative;top: -110px; right:-650px">DM</button>
+                <a href="direct_message?username=${username}">
+                    <button class="dm-button" style="background-color: #dddddd;color: black;border: 1px solid black;position: relative;top: -500px; right:-650px">DM</button>
                 </a>
             </div>
         </article>`;

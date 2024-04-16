@@ -54,7 +54,12 @@ def index():
 
 @app.route('/direct_message')
 def dm():
-    return Response(render_template('direct_message.html'))
+    username = str(request.args.get('username'))
+    return Response(render_template('direct_message.html', Recepient_Username=username))
+
+@app.route('/go_back')
+def back():
+    return make_response(redirect(url_for('index')))
 
 @app.route('/register', methods=['POST'])
 def giveRegister():
