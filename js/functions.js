@@ -62,12 +62,25 @@ function clearChat() {
     document.getElementById("chatbox").innerHTML = "";
 }
 
+{
+    var lengthOfMessage = 0; //This is such an ugly way to do this.
+}
+
 function updateChat() {
     const request = new XMLHttpRequest();
     request.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
-            clearChat();
+            // clearChat();
             const messages = JSON.parse(this.response);
+            console.log(lengthOfMessage)
+            for(let j = 0; j < lengthOfMessage; j++){ //Remove messages that have already been displayed.
+                messages.pop()
+            }
+            console.log(messages)
+            if (Object.keys(messages).length > lengthOfMessage){
+                lengthOfMessage = Object.keys(messages).length
+            }
+            console.log(lengthOfMessage)
             for (const message of messages) {
                 document.getElementById("chatbox").innerHTML += newChat(message);
             }
