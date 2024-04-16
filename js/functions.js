@@ -37,7 +37,7 @@ function newChat(chatJSON) {
                         <div class="level-item">
                             <div class="file">
                                 <label class="file-label">
-                                    <input class="file-input" type="file" name="file" />
+                                    <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
                                     <span class="file-icon">
                                         <i class="fas fa-upload"></i>
                                     </span>

@@ -268,7 +268,8 @@ def table_exist(name: str):
 @app.route('/upload', methods=['POST'])
 def uploadFile():
     file = request.files['file']
-    if file is not None:
+    print(file.filename)
+    if file is not None and '.' in file.filename:
         fileName = secure_filename(file.filename)
         fileExtension = fileName.rsplit('.', 1)[1].lower()
         if fileExtension in ALLOWED_EXTENSIONS:
