@@ -33,26 +33,34 @@ function newChat(chatJSON) {
                         </div>
                     </div>
                     <div class="level-right">
+                    </div>
+                </nav>
+                <a href="direct_message/${username}">
+                    <button class="dm-button" style="background-color: #dddddd;color: black;border: 1px solid black;position: relative;top: -110px; right:-650px">DM</button>
+                </a>
+            </div>
+            <div style="display: block">
+                <div class="file is-boxed cell">
+                    <label class="file-label">
+                        <input class="file-input" type="file" name="resume" />
+                        <span class="file-cta">
+                            <span class="file-icon">
+                                <i class="fas fa-upload"></i>
+                            </span>
+                            <span class="file-label"> Choose a file… </span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="cell">
                     <form action="/upload" method="POST" enctype="multipart/form-data">
                         <div class="level-item">
-                            <div class="file">
-                                <label class="file-label">
-                                    <input class="file-input" type="file" name="file" />
-                                    <span class="file-icon">
-                                        <i class="fas fa-upload"></i>
-                                    </span>
-                                </label>
-                            </div>
                         </div>
                         <div class="level-item" style="margin: 3px">
                             <button type="submit" class="button is-primary">Add photo to collection</button>
                         </div>
                     </form>
-                    </div>
-                </nav>
-                <a href="direct_message">
-                    <button class="dm-button" style="background-color: #dddddd;color: black;border: 1px solid black;position: relative;top: -110px; right:-650px">DM</button>
-                </a>
+                </div>
             </div>
         </article>`;
     return new_message_html;

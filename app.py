@@ -42,6 +42,20 @@ def connect_to_database():
     cursor = connection.cursor()
     return connection, cursor
 
+def get_username():
+    if 'auth_token' in request.cookies:
+        connection, cursor = connect_to_database()
+        hashed_auth = hashlib.sha256(request.cookies.get('auth_token').encode()).hexdigest()
+        if (not table_exist('User',cursor)):
+            cursor.execute('CREATE Table IF NOT EXISTS User (username TEXT, password TEXT, auth_token TEXT, ID int PRIMARY KEY AUTO_INCREMENT)')
+            connection.commit()
+        cursor.execute('SELECT * FROM User WHERE auth_token = %s', (hashed_auth,))
+        user = cursor.fetchall()
+        if len(user) != 0:
+            user = user[0]
+            return user
+    return None
+
 @app.route('/') #Returns templates/index.html
 def index():
     username='guest'
@@ -75,9 +89,10 @@ def index():
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
 
-@app.route('/direct_message')
-def dm():
-    return Response(render_template('direct_message.html'))
+@app.route('/direct_message/<recipient>')
+def dm(recipient):
+    username = get_username()
+    return Response(render_template('direct_message.html', Recipient_Username=recipient))
 
 @app.route('/register', methods=['POST'])
 def giveRegister():
@@ -95,7 +110,7 @@ def giveRegister():
             connection.commit()
             print("table exists now? ", table_exist('User',cursor))
         exist = False
-        cursor.execute("SELEct * FROM User")
+        cursor.execute("SELECT * FROM User")
         users = cursor.fetchall()
         for i in users:
             if i[0] == username:
