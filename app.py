@@ -4,9 +4,12 @@ import bcrypt
 import secrets
 import hashlib
 import time 
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 config = {
     'host': 'oursql',
     'user': 'user', 
@@ -232,7 +235,6 @@ def createPost():
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
 
-
 @app.route('/like', methods=['POST'])
 def createLike():
     #Create post should be called via html form
@@ -322,6 +324,22 @@ def table_exist(name: str, cursor):
         return True
     return False
 
+@app.route('/upload', methods=['POST'])
+def uploadFile():
+    file = request.files['file']
+    print(file.filename)
+    if file is not None and '.' in file.filename:
+        fileName = secure_filename(file.filename)
+        fileExtension = fileName.rsplit('.', 1)[1].lower()
+        if fileExtension in ALLOWED_EXTENSIONS:
+            file.save('/code/public/' + fileName)
+    return redirect("/", code=302)
+
+@app.route('/userUploads/<filename>')
+def giveUserFile(filename):
+    fileName = secure_filename(filename)
+    print("The filename is: " + filename)
+    return send_from_directory("public", filename)
 
 @app.route('/css/<css>') #Returns any file from css directory
 def giveCSS(css):
