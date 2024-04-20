@@ -203,7 +203,7 @@ def createPost():
 
     connection, cursor = connect_to_database()
     if not table_exist('Posts',cursor):
-        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
 
@@ -296,15 +296,18 @@ def fetchLikes(id, cursor):
 def readMessages():
     connection, cursor = connect_to_database()
     if not table_exist('Posts',cursor):
-        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
-    script = 'SELECT username, message, id from Posts ORDER BY id DESC'
+    script = 'SELECT username, message, id, image_link from Posts ORDER BY id DESC'
     cursor.execute(script)
     data = cursor.fetchall()
     result = []
     for line in data:
-        result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor))})
+        if line[3] == None:
+            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": ""})
+        else:
+            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": line[3]})
         # result.append({"message": line[1], "username": line[0], "id": line[3]})
     connection.close()
     return jsonify(result)
@@ -332,14 +335,23 @@ def uploadFile():
         fileName = secure_filename(file.filename)
         fileExtension = fileName.rsplit('.', 1)[1].lower()
         if fileExtension in ALLOWED_EXTENSIONS:
+            connection, cursor = connect_to_database()
+            auth = request.cookies.get('auth_token')
+            id = request.form.get('id')
+            fileName = "Post" + str(id) + "." + fileExtension
+            script = 'UPDATE Posts SET image_link = %s WHERE id = %s'
+            cursor.execute(script, (fileName, id))
+            connection.commit()
             file.save('/code/public/' + fileName)
+            cursor.close()
+            connection.close()
     return redirect("/", code=302)
 
 @app.route('/userUploads/<filename>')
 def giveUserFile(filename):
     fileName = secure_filename(filename)
-    print("The filename is: " + filename)
-    return send_from_directory("public", filename)
+    print("The filename is: " + fileName)
+    return send_from_directory("public", fileName)
 
 @app.route('/css/<css>') #Returns any file from css directory
 def giveCSS(css):
