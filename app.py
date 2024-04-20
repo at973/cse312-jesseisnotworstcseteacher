@@ -13,7 +13,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 config = {
     'host': 'oursql',
     'user': 'user', 
-    'passwd': 'password',
+    'passwd': '31f58458f0cf8691fe88ab7e7720eea9089fd986',
     'database': 'mysql'
 }
 
@@ -167,7 +167,7 @@ def giveLogin():
         if len(exist) != 0:
             print(exist)
             exist = exist[0]
-            hashed_password = exist['password']
+            hashed_password = exist[1]
             if bcrypt.checkpw(password.encode(), hashed_password):
                 cursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
                 update(hashed_auth, username,connection, cursor)
