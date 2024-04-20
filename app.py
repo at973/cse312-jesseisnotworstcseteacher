@@ -251,7 +251,7 @@ def createLike():
         cursor.execute(script, (hashed_auth,))
         data = cursor.fetchall() #data[0] = auth_token data[1] = exist
         if len(data) != 0:
-            data = data[1]
+            data = data[0]
         if data[1] == True: #If auth token and proper auth token, create post
             script = 'Select username from User where auth_token = %s'
             cursor.execute(script, (hashed_auth,))

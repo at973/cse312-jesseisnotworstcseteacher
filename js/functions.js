@@ -24,9 +24,9 @@ function newChat(chatJSON) {
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item">
-                            <form action="/like" method="post" enctype="application/x-www-form-urlencoded">
+                            <form action="/like" method="POST" enctype="application/x-www-form-urlencoded">
                                 <input value = "${id}" type="hidden" name="id">
-                                <buttom type="submit" value="Like" class="button is-ghost">
+                                <button type="submit" value="Like" class="button is-ghost">
                                     <span class="icon-text">
                                         <span class="icon"><i class="fa-solid fa-thumbs-up"></i></span>
                                         <span> Like </span>
