@@ -18,6 +18,20 @@
   flex: 1;
 }
 
+#DMchatbox {
+  overflow: scroll;
+  /* display: flex;
+  flex-direction: column; */
+  height: calc(100vh - var(--bulma-navbar-height) - 10vh);
+  padding: 3px;
+  /* height: 70vh; */
+  /* bottom: 100%; */
+}
+
+#DMchatbox > div {
+  flex: 1;
+}
+
 /* #send-message-box {
   position: absolute;
   bottom: 2px;
