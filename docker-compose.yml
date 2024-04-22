@@ -5,18 +5,18 @@ services:
     container_name: "oursql"
     image: mysql:latest
     ports:
-      - "3306:3306"
+      - "3002:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=pwd
-      - MYSQL_DATABASE=mysql
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
+      MYSQL_ROOT_PASSWORD: 31f58458f0cf8691fe88ab7e7720eea9089fd9863
+      MYSQL_DATABASE: mysql
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 31f58458f0cf8691fe88ab7e7720eea9089fd986
     volumes:
       - db_data:/var/lib/mysql
   web:
     build: .
     ports:
-      - "8080:8080"
+      - "8990:8080"
     links:
       - "mysql"
     depends_on:

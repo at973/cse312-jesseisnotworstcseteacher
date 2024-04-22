@@ -4,14 +4,17 @@ import bcrypt
 import secrets
 import hashlib
 import time 
+import os
+from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
 app = Flask(__name__)
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 config = {
     'host': 'oursql',
     'user': 'user', 
-    'passwd': 'password',
+    'passwd': '31f58458f0cf8691fe88ab7e7720eea9089fd986',
     'database': 'mysql'
 }
 
@@ -191,7 +194,7 @@ def giveLogin():
         if len(exist) != 0:
             print(exist)
             exist = exist[0]
-            hashed_password = exist['password']
+            hashed_password = exist[1]
             if bcrypt.checkpw(password.encode(), hashed_password):
                 cursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
                 update(hashed_auth, username,connection, cursor)
@@ -227,7 +230,7 @@ def createPost():
 
     connection, cursor = connect_to_database()
     if not table_exist('Posts',cursor):
-        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
 
@@ -258,7 +261,7 @@ def createPost():
     connection.close()
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
-
+  
 @socketio.on('createpostDM')
 def createPostDM(message, recipient, user):
     print("TEST TWO")
@@ -307,7 +310,6 @@ def createPostDM(message, recipient, user):
     response = make_response(redirect('/direct_message/' + recipient_username)) #Return 200
     return response
 
-
 @app.route('/like', methods=['POST'])
 def createLike():
     #Create post should be called via html form
@@ -324,7 +326,7 @@ def createLike():
         cursor.execute(script, (hashed_auth,))
         data = cursor.fetchall() #data[0] = auth_token data[1] = exist
         if len(data) != 0:
-            data = data[1]
+            data = data[0]
         if data[1] == True: #If auth token and proper auth token, create post
             script = 'Select username from User where auth_token = %s'
             cursor.execute(script, (hashed_auth,))
@@ -369,15 +371,18 @@ def fetchLikes(id, cursor):
 def readMessages():
     connection, cursor = connect_to_database()
     if not table_exist('Posts',cursor):
-        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
-    script = 'SELECT username, message, id from Posts ORDER BY id DESC'
+    script = 'SELECT username, message, id, image_link from Posts ORDER BY id DESC'
     cursor.execute(script)
     data = cursor.fetchall()
     result = []
     for line in data:
-        result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor))})
+        if line[3] == None:
+            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": ""})
+        else:
+            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": line[3]})
         # result.append({"message": line[1], "username": line[0], "id": line[3]})
     connection.close()
     return jsonify(result)
@@ -416,6 +421,31 @@ def table_exist(name: str, cursor):
         return True
     return False
 
+@app.route('/upload', methods=['POST'])
+def uploadFile():
+    file = request.files['file']
+    print(file.filename)
+    if file is not None and '.' in file.filename:
+        fileName = secure_filename(file.filename)
+        fileExtension = fileName.rsplit('.', 1)[1].lower()
+        if fileExtension in ALLOWED_EXTENSIONS:
+            connection, cursor = connect_to_database()
+            auth = request.cookies.get('auth_token')
+            id = request.form.get('id')
+            fileName = "Post" + str(id) + "." + fileExtension
+            script = 'UPDATE Posts SET image_link = %s WHERE id = %s'
+            cursor.execute(script, (fileName, id))
+            connection.commit()
+            file.save('/code/public/' + fileName)
+            cursor.close()
+            connection.close()
+    return redirect("/", code=302)
+
+@app.route('/userUploads/<filename>')
+def giveUserFile(filename):
+    fileName = secure_filename(filename)
+    print("The filename is: " + fileName)
+    return send_from_directory("public", fileName)
 
 @app.route('/css/<css>') #Returns any file from css directory
 def giveCSS(css):

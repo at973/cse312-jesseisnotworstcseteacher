@@ -10,8 +10,8 @@
         <div class="level-item has-text-centered">
             <div>
                 <picture>
-                    <source srcset="/images/logo-white.png" media="(prefers-color-scheme:dark)" class="logo">
-                    <img src="/images/logo-black.png" class="logo">
+                    <source srcset="images/logo-white.png" media="(prefers-color-scheme:dark)" class="logo">
+                    <img src="images/logo-black.png" class="logo">
                 </picture>
             </div>
         </div>
@@ -27,8 +27,8 @@
                             <input type="hidden" id="user" name="user" value="{{ username }}">
                             <input type="hidden" id="recipient" name="recipient" value="{{ Recipient_Username }}">
                             <div class="field has-addons p-3">
-                            <p class="control is-expanded">
-                            <input class="input" type="text" id="DMmessage" name="message" placeholder="Send Message to {{ Recipient_Username }}...">
+                                <p class="control is-expanded">
+                                    <input class="input" type="text" name="message" placeholder="Send Message to {Recepient Username}...">
                                 </p>
                                 <p class="control">
                                     <button type="submit" id="send-button" class="button">Submit</button>
