@@ -5,8 +5,9 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
         <link rel="stylesheet" type="text/css" href="../css/style.css"/>
         <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+        <script src="/js/dmfunctions.js"></script>
     </head>
-    <body>
+    <body onload="load();">
         <div class="level-item has-text-centered">
             <div>
                 <picture>
@@ -43,24 +44,5 @@
                     </div>
                 <!-- </div> -->
             </article> 
-            <script>
-                console.log("TEST");
-                const socket = io();
-
-                socket.on('DMmessage', (data) => {
-                    console.log("MEssage:" + data);
-                });
-                
-                const messageInput = document.getElementById("send-button");
-                console.log("WORK:" + messageInput);
-                messageInput.addEventListener("click", function(){
-                    let user = document.getElementById("user").value;
-                    let recipient = document.getElementById("recipient").value;
-                    let message = document.getElementById("DMmessage").value;
-                    socket.emit("createPostDM", message, recipient, user);
-                    console.log("HELLO TEST");
-                    document.getElementById("DMmessage").value = "";
-                })
-            </script>
         </body>
 </html>

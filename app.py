@@ -261,7 +261,7 @@ def createPost():
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
   
-@socketio.on('createpostDM')
+@socketio.on('createPostDM')
 def createPostDM(message, recipient, user):
     print("TEST TWO")
     #Create post should be called via html form
