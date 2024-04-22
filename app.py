@@ -448,8 +448,18 @@ def uploadFile():
             cursor.execute(script, (fileName, id))
             connection.commit()
             file.save('/code/public/' + fileName)
+            cursor.execute("SELECT * FROM Posts WHERE id = %s",(str(id),))
+            # assume there is a post there since deleting isn't possible
+            record = cursor.fetchall()
+            if len(record) != 0:
+                record = record[0]
+                username = record[0]
+                message = record[1]
+                likes = fetchLikes(id,cursor)
+                emit('updatePost', {'message': message, 'username': username, 'id': id, 'likes': likes, 'image_link': fileName}, broadcast=True, namespace='/')
             cursor.close()
             connection.close()
+
     return redirect("/", code=302)
 
 @app.route('/userUploads/<filename>')

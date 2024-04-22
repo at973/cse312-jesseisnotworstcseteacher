@@ -67,7 +67,9 @@ function newChat(chatJSON) {
                     </form>
                 </div>
             </div>
+            <div id="${id}">
             ${imageHTML}
+            <\div>
         </article>`;
     return new_message_html;
 }
@@ -104,6 +106,10 @@ function updateChat() {
     request.send();
 }
 
+function updateImage (id, imageLink){
+    document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\">"
+}
+
 function generateTestChats() {
     chats = '';
     for(let i = 0; i < 1; i++) {
@@ -137,6 +143,11 @@ function initws() {
         console.log(data);
         currentChat = document.getElementById('chatbox').innerHTML
         document.getElementById('chatbox').innerHTML = newChat(data) + currentChat;
+    })
+
+    socket.on('updatePost', (data) => {
+        console.log(data);
+        updateImage(data.id,data.image_link);
     })
 
     document.getElementById('')
