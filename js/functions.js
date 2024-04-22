@@ -121,7 +121,7 @@ function getCookie(cname) {
 
 function initws() {
     // socket = new WebSocket(`ws://${window.location.host}/websocket_index`);
-    socket = io.connect();
+    socket = io.connect(null, {rememberTransport: false});
     // socket = io.connect(`https://${document.URL}`);
     document.getElementById('createpostform').onsubmit = (ev) => {
         ev.preventDefault();

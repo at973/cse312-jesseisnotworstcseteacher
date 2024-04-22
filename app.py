@@ -480,7 +480,8 @@ def ws_createpost(post):
     message = post.get('message')
     username = post.get('username')
     id = createPost(auth, message)
-    emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0'}, broadcast=True)
+    image_link = ""
+    emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0', 'image_link': ""}, broadcast=True)
 
 
 # @sock.route('/websocket_index')
