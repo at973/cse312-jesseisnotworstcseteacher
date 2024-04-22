@@ -51,15 +51,16 @@ function newChat(chatJSON) {
                 <div class="cell">
                     <form action="/upload" method="POST" enctype="multipart/form-data">
                         <input value = "${id}" type="hidden" name="id">
-                        <div class="level-item">
-                            <div class="file">
-                                <label class="file-label">
-                                    <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+                        <div class="file is-boxed cell">
+                            <label class="file-label">
+                                <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+                                <span class="file-cta">
                                     <span class="file-icon">
                                         <i class="fas fa-upload"></i>
                                     </span>
-                                </label>
-                            </div>
+                                    <span class="file-label"> Choose a file… </span>
+                                </span>
+                            </label>
                         </div>
                         <div class="level-item" style="margin: 3px">
                             <button type="submit" class="button is-primary">Add photo to collection</button>
@@ -67,7 +68,9 @@ function newChat(chatJSON) {
                     </form>
                 </div>
             </div>
+            <div id="${id}">
             ${imageHTML}
+            <\div>
         </article>`;
     return new_message_html;
 }
@@ -104,6 +107,10 @@ function updateChat() {
     request.send();
 }
 
+function updateImage (id, imageLink){
+    document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\">"
+}
+
 function generateTestChats() {
     chats = '';
     for(let i = 0; i < 1; i++) {
@@ -137,6 +144,11 @@ function initws() {
         console.log(data);
         currentChat = document.getElementById('chatbox').innerHTML
         document.getElementById('chatbox').innerHTML = newChat(data) + currentChat;
+    })
+
+    socket.on('updatePost', (data) => {
+        console.log(data);
+        updateImage(data.id,data.image_link);
     })
 
     document.getElementById('')
