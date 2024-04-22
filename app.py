@@ -241,7 +241,7 @@ def createPost(auth, message):
 
     connection, cursor = connect_to_database()
     if not table_exist('Posts',cursor):
-        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, user2 TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
 
@@ -354,6 +354,14 @@ def createLike():
                 script = 'INSERT into Likes (ID, username) VALUES(%s, %s)'
                 cursor.execute(script, (id, username[0],))
                 connection.commit()
+                cursor.execute("SELECT * FROM Posts WHERE id = %s",(str(id),))
+                record = cursor.fetchall()
+                if len(record) != 0:
+                    record = record[0]
+                    username = record[0]
+                    message = record[1]
+                    likes = fetchLikes(id,cursor)
+                    emit('updateLikes', {'id': id, 'likes': likes}, broadcast=True, namespace='/')
     connection.close()
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
@@ -382,18 +390,21 @@ def fetchLikes(id, cursor):
 def readMessages():
     connection, cursor = connect_to_database()
     if not table_exist('Posts',cursor):
-        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
+        script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, user2 TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
-    script = 'SELECT username, message, id, image_link from Posts ORDER BY id DESC'
+    script = 'SELECT username, message, id, image_link, user2 from Posts ORDER BY id DESC'
     cursor.execute(script)
     data = cursor.fetchall()
     result = []
     for line in data:
+        user = ""
+        if line[4] != None:
+            user = line[4]
         if line[3] == None:
-            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": ""})
+            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": "", "user2": user})
         else:
-            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": line[3]})
+            result.append({"message": line[1], "username": line[0], "id": str(line[2]), "likes": str(fetchLikes(line[2],cursor)), "image_link": line[3], "user2": user})
         # result.append({"message": line[1], "username": line[0], "id": line[3]})
     connection.close()
     return jsonify(result)
@@ -443,17 +454,18 @@ def uploadFile():
             connection, cursor = connect_to_database()
             auth = request.cookies.get('auth_token')
             id = request.form.get('id')
+            username = request.form.get('username')
             fileName = "Post" + str(id) + "." + fileExtension
             script = 'UPDATE Posts SET image_link = %s WHERE id = %s'
             cursor.execute(script, (fileName, id))
+            script = 'UPDATE Posts SET user2 = %s WHERE id = %s'
+            cursor.execute(script, (username, id))
             connection.commit()
             file.save('/code/public/' + fileName)
             cursor.execute("SELECT * FROM Posts WHERE id = %s",(str(id),))
-            # assume there is a post there since deleting isn't possible
             record = cursor.fetchall()
             if len(record) != 0:
                 record = record[0]
-                username = record[0]
                 message = record[1]
                 likes = fetchLikes(id,cursor)
                 emit('updatePost', {'message': message, 'username': username, 'id': id, 'likes': likes, 'image_link': fileName}, broadcast=True, namespace='/')
@@ -490,8 +502,7 @@ def ws_createpost(post):
     message = post.get('message')
     username = post.get('username')
     id = createPost(auth, message)
-    image_link = ""
-    emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0', 'image_link': ""}, broadcast=True)
+    emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0', 'image_link': "", 'user2': ""}, broadcast=True)
 
 
 # @sock.route('/websocket_index')

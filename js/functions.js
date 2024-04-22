@@ -5,7 +5,10 @@ function newChat(chatJSON) {
     const message = chatJSON.message;
     const id = chatJSON.id;
     const likes = chatJSON.likes;
-    const imageLink = chatJSON.image_link
+    const imageLink = chatJSON.image_link;
+    console.log(chatJSON);
+    const user2 = chatJSON.user2;
+    const name = document.getElementById('name').innerHTML;
     let imageHTML = ""
     if(imageLink.length != 0){
         imageHTML = "<img src = /userUploads/" + imageLink + " width = \"400\">"
@@ -37,7 +40,7 @@ function newChat(chatJSON) {
                             </form>
                         </div>
                         <div class="level-item">
-                            <label>${likes}</label>
+                            <label id="message_${id}">${likes}</label>
                         </div>
                     </div>
                     <div class="level-right">
@@ -51,6 +54,7 @@ function newChat(chatJSON) {
                 <div class="cell">
                     <form action="/upload" method="POST" enctype="multipart/form-data">
                         <input value = "${id}" type="hidden" name="id">
+                        <input value = "${name}" type="hidden" name="username">
                         <div class="file is-boxed cell">
                             <label class="file-label">
                                 <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
@@ -69,7 +73,7 @@ function newChat(chatJSON) {
                 </div>
             </div>
             <div id="${id}">
-            ${imageHTML}
+            ${imageHTML}<label>Posted by ${user2}</label>
             <\div>
         </article>`;
     return new_message_html;
@@ -107,8 +111,13 @@ function updateChat() {
     request.send();
 }
 
-function updateImage (id, imageLink){
-    document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\">"
+function updateImage (id, imageLink, user2){
+    console.log(id,imageLink,user2);
+    document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\"><label>Posted by " + user2 + "</label>";
+}
+
+function updateLikes (id, likes){
+    document.getElementById("message_" + id).innerHTML = likes;
 }
 
 function generateTestChats() {
@@ -148,14 +157,13 @@ function initws() {
 
     socket.on('updatePost', (data) => {
         console.log(data);
-        updateImage(data.id,data.image_link);
+        updateImage(data.id,data.image_link,data.username);
     })
 
-    document.getElementById('')
-    // const username = chatJSON.username;
-    // const message = chatJSON.message;
-    // const id = chatJSON.id;
-    // const likes = chatJSON.likes;
+    socket.on('updateLikes', (data) => {
+        console.log(data);
+        updateLikes(data.id,data.likes);
+    })
 }
 
 function welcome() {
