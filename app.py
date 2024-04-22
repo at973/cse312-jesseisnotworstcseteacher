@@ -202,7 +202,7 @@ def giveLogin():
             print(exist)
             exist = exist[0]
             hashed_password = exist[1]
-            if bcrypt.checkpw(password.encode(), hashed_password):
+            if bcrypt.checkpw(password.encode(), hashed_password.encode()):
                 cursor.execute('INSERT INTO Token (auth_token, exist) VALUES(%s,%s)', (hashed_auth, True))
                 update(hashed_auth, username,connection, cursor)
                 response.set_cookie('auth_token', auth_token, max_age=7200)
