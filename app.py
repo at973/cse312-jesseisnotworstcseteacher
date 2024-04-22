@@ -6,6 +6,7 @@ import hashlib
 import time 
 import os
 from werkzeug.utils import secure_filename
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
 
@@ -16,6 +17,8 @@ config = {
     'passwd': '31f58458f0cf8691fe88ab7e7720eea9089fd986',
     'database': 'mysql'
 }
+
+socketio = SocketIO(app)
 
 # success = False
 
@@ -94,8 +97,32 @@ def index():
 
 @app.route('/direct_message/<recipient>')
 def dm(recipient):
+    connection, cursor = connect_to_database()
     username = get_username()
-    return Response(render_template('direct_message.html', Recipient_Username=recipient))
+    cookies = request.cookies
+    auth = ''
+    if 'auth_token' in cookies:
+        auth = cookies['auth_token']
+        hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
+        userTable = table_exist('User',cursor)
+        tokenTable = table_exist('Token',cursor)
+        if userTable:
+            if tokenTable:
+                cursor.execute('SELECT exist FROM Token WHERE auth_token = %s', (hashed_auth,))
+                exist = cursor.fetchone()
+                exist = exist[0]
+                if exist:
+                    cursor.execute('SELECT username FROM User WHERE auth_token = %s', (hashed_auth,))
+                    username = cursor.fetchone()
+                    username = username[0]
+                    connection.close()
+                    if username != recipient:
+                        return Response(render_template('direct_message.html', Recipient_Username=recipient, username=username))
+    response = make_response("Forbidden", 403)
+    connection.close()
+    return response
+                
+
 
 @app.route('/register', methods=['POST'])
 def giveRegister():
@@ -234,6 +261,54 @@ def createPost():
     connection.close()
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
+  
+@socketio.on('createpostDM')
+def createPostDM(message, recipient, user):
+    print("TEST TWO")
+    #Create post should be called via html form
+    recipient_username = recipient
+    print('Username:' + recipient_username)
+    auth = request.cookies.get('auth_token')
+    print("Auth is: " + str(auth))
+    print("Message is: " + str(message))
+    message = message.replace("&", "&amp;") #Replaces & with html safe version
+    message = message.replace(">", "&gt;") #Replaces > with html safe version
+    message = message.replace("<", "&lt;") #Replaces < with html safe version
+    message = message.replace("\"", "&quot;") #Replaces " with html safe version
+
+    connection, cursor = connect_to_database()
+    if not table_exist('PostsDM',cursor):
+        script = 'CREATE Table if not exists PostsDM (username TEXT, recipient_username TEXT, message TEXT, ID int AUTO_INCREMENT, PRIMARY KEY (ID))'
+        cursor.execute(script)
+        connection.commit()
+
+    # testCreate() #MUST REMOVE, JUST FOR TESTING!!!
+
+    if auth is not None:
+        hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
+        print("Hashed auth is: " + str(hashed_auth))
+        if not table_exist("Token",cursor):
+            cursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
+            connection.commit()
+        script = 'SELECT * from Token where auth_token = %s'
+        cursor.execute(script, (hashed_auth,))
+        data = cursor.fetchall() #data[0] = auth_token data[1] = exist
+        if len(data) != 0:
+            data = data[0]
+            print(data)
+            if data[1] == True: #If auth token and proper auth token, create post
+                script = 'Select username from User where auth_token = %s'
+                cursor.execute(script, (hashed_auth,))
+                username = cursor.fetchall()
+                if len(username) != 0:
+                    username = username[0]
+                    script = 'INSERT into PostsDM (username, recipient_username, message) VALUES(%s, %s, %s)'
+                    username = username[0]
+                    cursor.execute(script, (username, recipient_username, message))
+                    connection.commit()
+    connection.close()
+    response = make_response(redirect('/direct_message/' + recipient_username)) #Return 200
+    return response
 
 @app.route('/like', methods=['POST'])
 def createLike():
@@ -312,6 +387,25 @@ def readMessages():
     connection.close()
     return jsonify(result)
 
+@app.route('/DMmessages', methods=['GET'])
+def readDMMessages():
+    username = request.args.get('username')
+    recipient_username = request.args.get('Recipient_Username')
+    connection, cursor = connect_to_database()
+    if not table_exist('PostsDM', cursor):
+        script = 'CREATE TABLE IF NOT EXISTS PostsDM (username TEXT, recipient_username TEXT, message TEXT, ID INT AUTO_INCREMENT, PRIMARY KEY (ID))'
+        cursor.execute(script)
+        connection.commit()
+
+    script = 'SELECT username, recipient_username, message, id FROM PostsDM WHERE (username = %s AND recipient_username = %s) ORDER BY id DESC'
+    cursor.execute(script, (username, recipient_username, recipient_username, username))
+    data = cursor.fetchall()
+    result = []
+    for line in data:
+        result.append({"message": line[2], "username": line[0], "recipient_username": line[1], "id": str(line[3]), "likes": str(fetchLikes(line[3], cursor))})
+    connection.close()
+    return jsonify(result)
+
 def update(auth_token, username, connection, cursor):
     cursor.execute('UPDATE User SET auth_token = %s WHERE username = %s', (auth_token, username))
     connection.commit
@@ -367,3 +461,5 @@ def giveImage(images):
 
 if __name__ == '__main__':
     app.run(debug=True,host="0.0.0.0",port=8080)
+    socketio.run(app)
+    
