@@ -5,6 +5,7 @@ function newChat(chatJSON) {
     const message = chatJSON.message;
     const id = chatJSON.id;
     const likes = chatJSON.likes;
+    const likefunc = ws ? '/like' : `ws_like(${id})`;
     const new_message_html =
         `<article class="media">
             <figure class="media-left">
@@ -99,7 +100,7 @@ function generateTestChats() {
 }
 
 function getCookie(cname) {
-    document.cookie.split('; ').find((row) => row.startsWith(`${cname}=`))?.split('=')[1];
+    return document.cookie.split('; ').find((row) => row.startsWith(`${cname}=`))?.split('=')[1];
 }
 
 function initws() {
@@ -118,8 +119,11 @@ function initws() {
 
     socket.on('createpostresponse', (data) => {
         console.log(data);
-        document.getElementById('chatbox').innerHTML += newChat(data);
+        currentChat = document.getElementById('chatbox').innerHTML
+        document.getElementById('chatbox').innerHTML = newChat(data) + currentChat;
     })
+
+    document.getElementById('')
     // const username = chatJSON.username;
     // const message = chatJSON.message;
     // const id = chatJSON.id;
