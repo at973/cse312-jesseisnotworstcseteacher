@@ -16,7 +16,7 @@ services:
   web:
     build: .
     ports:
-      - "8990:8080"
+      - "8080:8080"
     links:
       - "mysql"
     depends_on:
