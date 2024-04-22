@@ -1,3 +1,5 @@
+const ws = true;
+let socket = null;
 function newChat(chatJSON) {
     const username = chatJSON.username;
     const message = chatJSON.message;
@@ -96,8 +98,41 @@ function generateTestChats() {
     document.getElementById('chatbox').innerHTML = chats;
 }
 
+function getCookie(cname) {
+    document.cookie.split('; ').find((row) => row.startsWith(`${cname}=`))?.split('=')[1];
+}
+
+function initws() {
+    // socket = new WebSocket(`ws://${window.location.host}/websocket_index`);
+    socket = io.connect();
+    // socket = io.connect(`https://${document.URL}`);
+    document.getElementById('createpostform').onsubmit = (ev) => {
+        ev.preventDefault();
+        const msg = document.getElementById('createpostinput').value;
+        document.getElementById('createpostinput').value = '';
+        const username = document.getElementById('displayed_username').innerText;
+        console.log(msg);
+        // socket.send(JSON.stringify({'messageType': 'createpost', 'message': msg}));
+        socket.emit('createpostrequest', {message: msg, auth_token: getCookie('auth_token'), username: username});
+    }
+
+    socket.on('createpostresponse', (data) => {
+        console.log(data);
+        document.getElementById('chatbox').innerHTML += newChat(data);
+    })
+    // const username = chatJSON.username;
+    // const message = chatJSON.message;
+    // const id = chatJSON.id;
+    // const likes = chatJSON.likes;
+}
+
 function welcome() {
     // generateTestChats();  // Line is only here for tests
-    updateChat();
-    setInterval(updateChat, 5000);
+    if (ws) {
+        updateChat();
+        initws();
+    } else {
+        updateChat();
+        setInterval(updateChat, 5000);
+    }
 }
