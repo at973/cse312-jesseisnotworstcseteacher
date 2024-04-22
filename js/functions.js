@@ -51,15 +51,16 @@ function newChat(chatJSON) {
                 <div class="cell">
                     <form action="/upload" method="POST" enctype="multipart/form-data">
                         <input value = "${id}" type="hidden" name="id">
-                        <div class="level-item">
-                            <div class="file">
-                                <label class="file-label">
-                                    <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+                        <div class="file is-boxed cell">
+                            <label class="file-label">
+                                <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+                                <span class="file-cta">
                                     <span class="file-icon">
                                         <i class="fas fa-upload"></i>
                                     </span>
-                                </label>
-                            </div>
+                                    <span class="file-label"> Choose a file… </span>
+                                </span>
+                            </label>
                         </div>
                         <div class="level-item" style="margin: 3px">
                             <button type="submit" class="button is-primary">Add photo to collection</button>
