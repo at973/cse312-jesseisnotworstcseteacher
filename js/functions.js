@@ -5,7 +5,10 @@ function newChat(chatJSON) {
     const message = chatJSON.message;
     const id = chatJSON.id;
     const likes = chatJSON.likes;
-    const imageLink = chatJSON.image_link
+    const imageLink = chatJSON.image_link;
+    console.log(chatJSON);
+    const user2 = chatJSON.user2;
+    const name = document.getElementById('name').innerHTML;
     let imageHTML = ""
     if(imageLink.length != 0){
         imageHTML = "<img src = /userUploads/" + imageLink + " width = \"400\">"
@@ -37,7 +40,7 @@ function newChat(chatJSON) {
                             </form>
                         </div>
                         <div class="level-item">
-                            <label>${likes}</label>
+                            <label id="message_${id}">${likes}</label>
                         </div>
                     </div>
                     <div class="level-right">
@@ -51,15 +54,17 @@ function newChat(chatJSON) {
                 <div class="cell">
                     <form action="/upload" method="POST" enctype="multipart/form-data">
                         <input value = "${id}" type="hidden" name="id">
-                        <div class="level-item">
-                            <div class="file">
-                                <label class="file-label">
-                                    <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+                        <input value = "${name}" type="hidden" name="username">
+                        <div class="file is-boxed cell">
+                            <label class="file-label">
+                                <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+                                <span class="file-cta">
                                     <span class="file-icon">
                                         <i class="fas fa-upload"></i>
                                     </span>
-                                </label>
-                            </div>
+                                    <span class="file-label"> Choose a file… </span>
+                                </span>
+                            </label>
                         </div>
                         <div class="level-item" style="margin: 3px">
                             <button type="submit" class="button is-primary">Add photo to collection</button>
@@ -67,7 +72,9 @@ function newChat(chatJSON) {
                     </form>
                 </div>
             </div>
-            ${imageHTML}
+            <div id="${id}">
+            ${imageHTML}<label>Posted by ${user2}</label>
+            <\div>
         </article>`;
     return new_message_html;
 }
@@ -104,6 +111,15 @@ function updateChat() {
     request.send();
 }
 
+function updateImage (id, imageLink, user2){
+    console.log(id,imageLink,user2);
+    document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\"><label>Posted by " + user2 + "</label>";
+}
+
+function updateLikes (id, likes){
+    document.getElementById("message_" + id).innerHTML = likes;
+}
+
 function generateTestChats() {
     chats = '';
     for(let i = 0; i < 1; i++) {
@@ -121,7 +137,7 @@ function getCookie(cname) {
 
 function initws() {
     // socket = new WebSocket(`ws://${window.location.host}/websocket_index`);
-    socket = io.connect();
+    socket = io.connect(null, {rememberTransport: false});
     // socket = io.connect(`https://${document.URL}`);
     document.getElementById('createpostform').onsubmit = (ev) => {
         ev.preventDefault();
@@ -139,11 +155,15 @@ function initws() {
         document.getElementById('chatbox').innerHTML = newChat(data) + currentChat;
     })
 
-    document.getElementById('')
-    // const username = chatJSON.username;
-    // const message = chatJSON.message;
-    // const id = chatJSON.id;
-    // const likes = chatJSON.likes;
+    socket.on('updatePost', (data) => {
+        console.log(data);
+        updateImage(data.id,data.image_link,data.username);
+    })
+
+    socket.on('updateLikes', (data) => {
+        console.log(data);
+        updateLikes(data.id,data.likes);
+    })
 }
 
 function welcome() {
