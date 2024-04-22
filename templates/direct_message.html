@@ -4,40 +4,34 @@
         <title>Direct Message</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
         <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
     </head>
     <body>
         <div class="level-item has-text-centered">
             <div>
                 <picture>
-                    <source srcset="/images/logo-white.png" media="(prefers-color-scheme:dark)" class="logo">
-                    <img src="/images/logo-black.png" class="logo">
+                    <source srcset="images/logo-white.png" media="(prefers-color-scheme:dark)" class="logo">
+                    <img src="images/logo-black.png" class="logo">
                 </picture>
             </div>
         </div>
         <p class="is-size-3 has-text-centered" style="position: relative;top: 70px; right: -400px;">Direct Message</p>
-        <p class="is-size-5 has-text-centered" style="position: relative; right: 400px;">{{ Recipient_Username }}</p>
+        <p class="is-size-5 has-text-centered" style="position: relative; right: 400px;">Send Message To: {{ Recipient_Username }}</p>
+        <p class="is-size-5 has-text-centered" style="position: relative;top: -90px; right: 550px;">{{ username }}</p>
         <section class="content columns" style="height: 100%;">
             <!-- CHAT COLUMN -->
-            <article class="column is-three-fifths" id="chat-column">
-            <!-- <article class="chat column box is-three-fifths" style="position: relative;"> -->
-                <!-- <div class="box is-fullheight"> -->
+            <article class="column is-three-fifths" id="chat-columnDM">
                     <div id="chatbox" class="p-2">
-                        <!-- <div class="tile is-vertical">
-                            <article class="message is-primary">
-                                <div class="message-body">
-                                    <b>guest: </b>this is what a chat looks like
-                                </div>
-                            </article>
-                        </div> -->
                     </div>
-                    <div class="is-widescreen" id="send-message-box">
-                        <form method="post" action = "/createpost">
+                    <div class="is-widescreen" id="send-message-boxDM">
+                            <input type="hidden" id="user" name="user" value="{{ username }}">
+                            <input type="hidden" id="recipient" name="recipient" value="{{ Recipient_Username }}">
                             <div class="field has-addons p-3">
                                 <p class="control is-expanded">
-                                    <input class="input" type="text" name="message" placeholder="Send Message to {{ Recepient_Username }}...">
+                                    <input class="input" type="text" name="message" placeholder="Send Message to {Recepient Username}...">
                                 </p>
                                 <p class="control">
-                                    <button type="submit" class="button">Submit</button>
+                                    <button type="submit" id="send-button" class="button">Submit</button>
                                 </p>
                                 <!-- <div class="field-label is-normal"><label class="label" for="message"> Message </label></div>
                                 <div class="field-body">
@@ -48,6 +42,25 @@
                         </form>
                     </div>
                 <!-- </div> -->
-            </article>
+            </article> 
+            <script>
+                console.log("TEST");
+                const socket = io();
+
+                socket.on('DMmessage', (data) => {
+                    console.log("MEssage:" + data);
+                });
+                
+                const messageInput = document.getElementById("send-button");
+                console.log("WORK:" + messageInput);
+                messageInput.addEventListener("click", function(){
+                    let user = document.getElementById("user").value;
+                    let recipient = document.getElementById("recipient").value;
+                    let message = document.getElementById("DMmessage").value;
+                    socket.emit("createPostDM", message, recipient, user);
+                    console.log("HELLO TEST");
+                    document.getElementById("DMmessage").value = "";
+                })
+            </script>
         </body>
 </html>
