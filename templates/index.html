@@ -5,6 +5,7 @@
         <title>jesseisnotworstcseteacher</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
         <link rel="stylesheet" type="text/css" href="/css/style.css"/>
+        <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
         <script src="/js/functions.js"></script>
         <script src="https://kit.fontawesome.com/8652b3eb34.js" crossorigin="anonymous"></script>
         <link rel="shortcut icon" href="/images/favicon.ico">
@@ -48,10 +49,10 @@
                     <div id="chatbox" class="p-2">
                     </div>
                     <div class="is-widescreen" id="send-message-box">
-                        <form method="post" action = "/createpost">
+                        <form method="post" action="/createpost" id="createpostform">
                             <div class="field has-addons p-3">
                                 <p class="control is-expanded">
-                                    <input class="input" type="text" name="message" placeholder="Photo Collection Title">
+                                    <input id="createpostinput" class="input" type="text" name="message" placeholder="Photo Collection Title">
                                 </p>
                                 <p class="control">
                                     <button type="submit" class="button">Submit</button>
@@ -70,7 +71,7 @@
             <!-- REGISTRATION COLUMN -->
             <article class="users column is-fullheight-with-navbar">
                 <form class="box register" action="/register" method="post">
-                    <h1 class="title">Register</h1>
+                    <h2 class="title">Register</h2>
                     <div class="field">
                     <label class="label">Username</label>
                     <div class="control">
@@ -95,7 +96,7 @@
                     <button class="button is-primary" value="Register" type="submit">Register</button>
                 </form>
                 <form class="box login" action="/login" method="post">
-                    <h1 class="title">Login:</h1>
+                    <h2 class="title">Login:</h2>
                     <div class="field">
                     <label class="label">Username</label>
                     <div class="control">

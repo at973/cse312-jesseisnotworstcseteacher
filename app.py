@@ -1,4 +1,7 @@
 from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request, jsonify, Response
+# from flask_sock import Sock
+from flask_socketio import SocketIO, emit
+import json
 import mysql.connector
 import bcrypt
 import secrets
@@ -9,6 +12,9 @@ from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
 app = Flask(__name__)
+# sock = Sock(app)
+socketio = SocketIO(app)
+clients = {}
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 config = {
@@ -60,6 +66,7 @@ def get_username():
         if len(user) != 0:
             user = user[0]
             return user
+        connection.close()
     return None
 
 @app.route('/') #Returns templates/index.html
@@ -86,7 +93,7 @@ def index():
             #         return make_response(stringbody)
         else: 
             # ERROR
-            username = "Guest"
+            username = "guest"
         # print("fuck it, here's the whole database", mycursor.fetchall())
         # print('username displayed: ', user, 'auth_token received:', hashed_auth)
         connection.close()
@@ -217,11 +224,15 @@ def giveLogout():
     return response
 
 @app.route('/createpost', methods=['POST'])
-def createPost():
+def createPostPolling():
+    createPost(request.cookies.get('auth_token'), request.form.get('message'))
+    response = make_response(redirect(url_for('index'))) #Return 200
+    return response
+
+def createPost(auth, message):
     #Create post should be called via html form
-    auth = request.cookies.get('auth_token')
+    inserted_id = -1
     print("Auth is: " + str(auth))
-    message = request.form.get('message')
     print("Message is: " + str(message))
     message = message.replace("&", "&amp;") #Replaces & with html safe version
     message = message.replace(">", "&gt;") #Replaces > with html safe version
@@ -258,9 +269,9 @@ def createPost():
                     username = username[0]
                     cursor.execute(script, (username, message))
                     connection.commit()
+                    inserted_id = cursor.lastrowid
     connection.close()
-    response = make_response(redirect(url_for('index'))) #Return 200
-    return response
+    return inserted_id
   
 @socketio.on('createpostDM')
 def createPostDM(message, recipient, user):
@@ -458,6 +469,25 @@ def giveJS(js):
 @app.route('/images/<images>') #Returns any file from images directory
 def giveImage(images):
     return send_from_directory('images', images)
+
+@socketio.on('connect')
+def handle_connect():
+    print('socket connected')
+
+@socketio.on('createpostrequest')
+def ws_createpost(post):
+    auth = post.get('auth_token')
+    message = post.get('message')
+    username = post.get('username')
+    id = createPost(auth, message)
+    emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0'}, broadcast=True)
+
+
+# @sock.route('/websocket_index')
+# def websocket_index(ws):
+#     while True:
+#         data = json.loads(ws.receive())
+#         ws.send(data)
 
 if __name__ == '__main__':
     app.run(debug=True,host="0.0.0.0",port=8080)
