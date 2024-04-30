@@ -8,7 +8,7 @@
   overflow: scroll;
   /* display: flex;
   flex-direction: column; */
-  height: calc(100vh - var(--bulma-navbar-height) - 10vh);
+  height: calc(100vh - var(--bulma-navbar-height) - 15vh);
   padding: 3px;
   /* height: 70vh; */
   /* bottom: 100%; */
