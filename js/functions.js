@@ -116,6 +116,16 @@ function updateImage (id, imageLink, user2){
     document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\"><label>Posted by " + user2 + "</label>";
 }
 
+function updatePFP(image_link){
+    var figureElement = document.querySelector('.media-left');
+
+    figureElement.innerHTML = `
+        <p class="image is-64x64">
+            <img src="${image_link}" />
+        </p>
+    `;
+}
+
 function updateLikes (id, likes){
     document.getElementById("message_" + id).innerHTML = likes;
 }
@@ -158,6 +168,11 @@ function initws() {
     socket.on('updatePost', (data) => {
         console.log(data);
         updateImage(data.id,data.image_link,data.username);
+    })
+
+    socket.on('updateProfilePicture', (data) => {
+        console.log(data);
+        updatePFP(data.image_link);
     })
 
     socket.on('updateLikes', (data) => {
