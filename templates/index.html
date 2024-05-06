@@ -11,7 +11,29 @@
         <link rel="shortcut icon" href="/images/favicon.ico">
         <!-- <link rel="stylesheet" type="text/css" href="../css/style.css"/>
         <script src="../js/functions.js"></script> -->
+        <style>
+            :root {
+                --background-color-light: #ffffff;
+                --text-color-light: #333;
+            }
+    
+            [data-theme="dark"] {
+                --background-color-dark: #000000;
+                --text-color-dark: #fff;
+            }
+    
+            body {
+                background-color: var(--background-color-light);
+                color: var(--text-color-light);
+            }
+    
+            [data-theme="dark"] body {
+                background-color: var(--background-color-dark);
+                color: var(--text-color-dark);
+            }
+        </style>
     </head>
+    <!---
     <div>
         <form action="/uploadPFP/{{ username }}" method="POST" enctype="multipart/form-data">
             <div class="upload-container">
@@ -23,8 +45,10 @@
             <button type="submit" class="button">Submit</button>
         </form>
     </div>
+    --->
     <label id="name" hidden>{{ username }}</label>
     <body onload="welcome();">
+        <button onclick="darkmode()">Dark Mode</button>
         <nav class="level navbar">
             <div class="level-item has-text-centered">
                 <div id="displayed_username">
@@ -139,5 +163,25 @@
                 Time Remaining Before Post:<div id="time_remaining"></div>
             </article>
         </section>
+        <script>
+            function darkmode(){
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                let newTheme;
+                if (currentTheme === 'dark') {
+                    newTheme = 'light';
+                } else {
+                    newTheme = 'dark';
+                }
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            }
+
+            document.addEventListener('DOMContentLoaded', function(){
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                }
+            });
+        </script>
     </body>
 </html>
