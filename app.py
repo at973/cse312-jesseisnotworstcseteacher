@@ -512,6 +512,70 @@ def table_exist(name: str, cursor):
         return True
     return False
 
+@app.route('/uploadPFP/<username>', methods=['POST'])
+@appLimiter
+def uploadPFP(username):
+    connection, cursor = connect_to_database()
+    if username == 'guest' or username == 'Guest':
+        return make_response("Forbidden", 403)
+    auth = request.cookies.get('auth_token')
+    if not auth:
+        return make_response("Forbidden", 403)
+    hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
+    if not table_exist("Token",cursor):
+            cursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
+            connection.commit()
+    script = 'SELECT * from Token where auth_token = %s'
+    cursor.execute(script, (hashed_auth,))
+    data = cursor.fetchall() #data[0] = auth_token data[1] = exist
+    if len(data) != 0:
+        data = data[0]
+        print(data)
+        if data[1] == True: #If auth token and proper auth token, create post
+            script = 'Select username from User where auth_token = %s'
+            cursor.execute(script, (hashed_auth,))
+            username = cursor.fetchall()
+            if len(username) != 0:
+                username2 = username[0]
+                if username == username2:
+                    file = request.files['file']
+                    print(file.filename)
+                    if file is not None and '.' in file.filename:
+                        fileName = secure_filename(file.filename)
+                        fileExtension = fileName.rsplit('.', 1)[1].lower()
+                        if fileExtension in ALLOWED_EXTENSIONS:
+                            if not table_exist('ProfilePic', cursor):
+                                script = 'CREATE Table if not exists ProfilePic (username TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
+                                cursor.execute(script)
+                                connection.commit()
+                            script = 'SELECT * FROM ProfilePic WHERE username = %s'
+                            cursor.execute(script, (username,))
+                            data = cursor.fetchone()
+                            connection.commit()
+                            if not data:
+                                script = 'SELECT * FROM ProfilePic ORDER BY ID DESC LIMIT 1'
+                                cursor.execute(script)
+                                id = cursor.fetchone()
+                                id = id[1]
+                                fileName = "PFP" + str(id + 1) + "." + fileExtension
+                                cursor.execute('INSERT INTO ProfilePic (username, image_link) VALUES(%s,%s)', (username, fileName))
+                                connection.commit()
+                            if data:
+                                id = data[1]
+                                fileName = "PFP" + str(id) + "." + fileExtension
+                            file.save('/code/public/' + fileName)
+                            script = 'SELECT * FROM ProfilePic WHERE username = %s'
+                            cursor.execute(script, (username,))
+                            data = cursor.fetchone()
+                            connection.commit()
+                            emit('updateProfilePicture', {'image_link': fileName}, broadcast=True, namespace='/')
+
+    print('Here')
+    print(username)
+    cursor.close()
+    connection.close()
+    return redirect("/", code=302)
+
 @app.route('/upload', methods=['POST'])
 @appLimiter
 def uploadFile():
