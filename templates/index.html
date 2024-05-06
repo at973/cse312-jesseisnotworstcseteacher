@@ -50,41 +50,29 @@
                     <div id="chatbox" class="p-2">
                     </div>
                     <div class="is-widescreen" id="send-message-box">
-                        <form method="post" action="/createpost" id="createpostform">
-                            <div class="field has-addons p-3">
+                        <form class="p-3" method="post" action="/createpost" id="createpostform">
+                            <div class="field has-addons">
                                 <p class="control is-expanded">
                                     <input id="createpostinput" class="input" type="text" name="message" placeholder="Photo Collection Title">
                                 </p>
                                 <p class="control">
-                                    <button type="submit" class="button">Submit</button>
+                                    <a class="button is-static">Delay Submit By:</a>
                                 </p>
-                                <!-- <div class="field-label is-normal"><label class="label" for="message"> Message </label></div>
-                                <div class="field-body">
-                                    <div class="field"><input class="input is-rounded is-expanded" type="text" name="message"></div>
-                                    <button type="submit"> Submit </button>
-                                </div> -->
-                            </div>
-                            <div class="field is-horizontal has-addons p-3">
-                                <div class="field-label is-normal">
-                                    <label class="label">Delay Sending Message -- Send It In:</label>
-                                </div>
                                 <p class="control">
-                                  <input class="input" type="text" placeholder="Amount of Time">
+                                  <input id="delaypostinput" class="input" type="number" placeholder="Amount of Time" value="0">
                                 </p>
                                 <p class="control">
                                   <span class="select">
-                                    <select>
-                                      <option>Seconds</option>
-                                      <option>Minutes</option>
-                                      <option>Hours</option>
-                                      <option>Days</option>
+                                    <select id="delaypostunit">
+                                      <option value="sec">Seconds</option>
+                                      <option value="min">Minutes</option>
+                                      <option value="hr">Hours</option>
+                                      <option value="day">Days</option>
                                     </select>
                                   </span>
                                 </p>
                                 <p class="control">
-                                  <button class="button">
-                                    Send Message
-                                  </button>
+                                    <button type="submit" class="button" id="createpostsubmit">Submit</button>
                                 </p>
                             </div>
                         </form>
@@ -137,6 +125,7 @@
 
                     <button class="button is-primary" value="Login" type="submit">Sign in</button>
                 </form>
+                Time Remaining Before Post:<div id="time_remaining"></div>
             </article>
         </section>
     </body>
