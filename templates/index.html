@@ -12,6 +12,17 @@
         <!-- <link rel="stylesheet" type="text/css" href="../css/style.css"/>
         <script src="../js/functions.js"></script> -->
     </head>
+    <div>
+        <form action="/uploadPFP/{{ username }}" method="POST" enctype="multipart/form-data">
+            <div class="upload-container">
+                <label for="profile-picture-input" class="upload-label">
+                    Change Profile picture
+                </label>
+                <input id="profile-picture-input" class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+            </div>
+            <button type="submit" class="button">Submit</button>
+        </form>
+    </div>
     <label id="name" hidden>{{ username }}</label>
     <body onload="welcome();">
         <nav class="level navbar">
@@ -86,12 +97,6 @@
                                     Send Message
                                   </button>
                                 </p>
-                            </div>
-                            <div>
-                                <form action="/uploadPFP/{{ username }}" method="POST" enctype="multipart/form-data">
-                                    <input class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
-                                    <button type="submit" class="button">Change Profile Picture</button>
-                                </form>
                             </div>
                         </form>
                     </div>
