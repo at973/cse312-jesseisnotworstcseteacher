@@ -230,10 +230,15 @@ def giveLogout():
 
 @app.route('/createpost', methods=['POST'])
 def createPostPolling():
+    time.sleep(int(request.form.get('delaypostinput')) * postUnitCalc(request.form.get('delaypostunit')))
     createPost(request.cookies.get('auth_token'), request.form.get('message'))
             #    request.form.get('delaypostinput'), request.form.get('delaypostunit'))
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
+
+def postUnitCalc(unit):
+    unit_dict = {'sec': 1, 'min': 60, 'hr': 3600, 'day': 3600 * 24}
+    return unit_dict[unit]
 
 def calcPostTime(delay, unit):
     time_unit_dict = {'sec': timedelta(seconds=delay), 
@@ -250,7 +255,6 @@ def equalTime(datetime1, datetime2):
 
 def createPost(auth, message):
     #Create post should be called via html form
-    time.sleep(10)
     inserted_id = -1
     print("Auth is: " + str(auth))
     print("Message is: " + str(message))
@@ -524,6 +528,8 @@ def ws_createpost(post):
     auth = post.get('auth_token')
     message = post.get('message')
     username = post.get('username')
+    print('post delay', post.get('delay') * postUnitCalc(post.get('delay_unit')))
+    time.sleep(int(post.get('delay')) * postUnitCalc(post.get('delay_unit')))
     id = createPost(auth, message)
     emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0', 'image_link': "", 'user2': ""}, broadcast=True)
 

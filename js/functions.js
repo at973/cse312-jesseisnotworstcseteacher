@@ -141,12 +141,18 @@ function initws() {
     // socket = io.connect(`https://${document.URL}`);
     document.getElementById('createpostform').onsubmit = (ev) => {
         ev.preventDefault();
+        console.log('createpostform executed')
         const msg = document.getElementById('createpostinput').value;
         document.getElementById('createpostinput').value = '';
         const username = document.getElementById('displayed_username').innerText;
+        const delay = document.getElementById('delaypostinput').value;
+        document.getElementById('delaypostinput').value = '';
+        const delay_unit = document.getElementById('delaypostunit').value;
         console.log(msg);
         // socket.send(JSON.stringify({'messageType': 'createpost', 'message': msg}));
-        socket.emit('createpostrequest', {message: msg, auth_token: getCookie('auth_token'), username: username});
+        socket.emit('createpostrequest', {message: msg, 
+            auth_token: getCookie('auth_token'), username: username, 
+            delay: delay, delay_unit: delay_unit});
     }
 
     socket.on('createpostresponse', (data) => {
