@@ -1,6 +1,6 @@
 from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request, jsonify, Response
 from datetime import datetime, timedelta
-import time
+import time as timer
 # from flask_sock import Sock
 from flask_socketio import SocketIO, emit
 # from flask_apscheduler import APScheduler
@@ -9,7 +9,6 @@ import mysql.connector
 import bcrypt
 import secrets
 import hashlib
-import time 
 import os
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
@@ -88,7 +87,7 @@ def connect_to_database():
             Success = True
         except:
             print("waiting 3 seconds for mysql container to start...")
-            time.sleep(3)
+            timer.sleep(3)
     cursor = connection.cursor()
     return connection, cursor
 
@@ -269,7 +268,7 @@ def giveLogout():
 @app.route('/createpost', methods=['POST'])
 @appLimiter
 def createPostPolling():
-    time.sleep(int(request.form.get('delaypostinput')) * postUnitCalc(request.form.get('delaypostunit')))
+    timer.sleep(int(request.form.get('delaypostinput')) * postUnitCalc(request.form.get('delaypostunit')))
     createPost(request.cookies.get('auth_token'), request.form.get('message'))
             #    request.form.get('delaypostinput'), request.form.get('delaypostunit'))
     response = make_response(redirect(url_for('index'))) #Return 200
@@ -599,7 +598,7 @@ def ws_createpost(post):
     connection.close()
     emit('timeremainingid', {'id': time_remaining_id})
     # print('post delay', post.get('delay') * postUnitCalc(post.get('delay_unit')))
-    time.sleep(int(delay) * postUnitCalc(post.get('delay_unit')))
+    timer.sleep(int(delay) * postUnitCalc(post.get('delay_unit')))
     id = createPost(auth, message)
     emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0', 'image_link': "", 'user2': ""}, broadcast=True)
 
