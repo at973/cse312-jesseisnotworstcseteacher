@@ -253,6 +253,10 @@ def equalTime(datetime1, datetime2):
             and datetime1.hour == datetime2.hour \
                 and datetime1.day == datetime2.day
 
+@app.route('/remaining time', methods=['POST'])
+def remaining_time():
+    pass
+
 def createPost(auth, message):
     #Create post should be called via html form
     inserted_id = -1
@@ -268,9 +272,6 @@ def createPost(auth, message):
         script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, user2 TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
-
-    # if not table_exist('Delayed_Posts', cursor):
-    #     script = 'CREATE Table if not exists Delayed_Posts (username)'
 
     # testCreate() #MUST REMOVE, JUST FOR TESTING!!!
 
@@ -528,11 +529,51 @@ def ws_createpost(post):
     auth = post.get('auth_token')
     message = post.get('message')
     username = post.get('username')
-    print('post delay', post.get('delay') * postUnitCalc(post.get('delay_unit')))
-    time.sleep(int(post.get('delay')) * postUnitCalc(post.get('delay_unit')))
+    connection, cursor = connect_to_database()
+    delay = post.get('delay')
+    if delay is None or delay == '':
+        delay = 0
+    time_remaining = int(delay) * postUnitCalc(post.get('delay_unit'))
+    print('time_remaining', time_remaining)
+
+    if not table_exist('Delayed_Posts', cursor):
+        script = 'CREATE Table if not exists Delayed_Posts (ID int AUTO_INCREMENT, time_remaining int, PRIMARY KEY (ID))'
+        cursor.execute(script)
+        connection.commit()
+
+    script = 'INSERT INTO Delayed_Posts (time_remaining) VALUES (%s)'
+    cursor.execute(script, (time_remaining,))
+    connection.commit()
+    script = 'SELECT ID From Delayed_Posts ORDER BY ID DESC LIMIT 1'
+    cursor.execute(script)
+    time_remaining_id = cursor.fetchone()[0]
+    cursor.close()
+    connection.close()
+    emit('timeremainingid', {'id': time_remaining_id})
+    # print('post delay', post.get('delay') * postUnitCalc(post.get('delay_unit')))
+    time.sleep(int(delay) * postUnitCalc(post.get('delay_unit')))
     id = createPost(auth, message)
     emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0', 'image_link': "", 'user2': ""}, broadcast=True)
 
+@app.route('/time_remaining')
+def send_time_remaining():
+    time_remaining_id = int(request.cookies.get('time_remaining_id', '0'))
+    connection, cursor = connect_to_database()
+    if not table_exist('Delayed_Posts', cursor):
+        script = 'CREATE Table if not exists Delayed_Posts (ID int AUTO_INCREMENT, time_remaining int, PRIMARY KEY (ID))'
+        cursor.execute(script)
+        connection.commit()
+        return jsonify({'time_remaining': 0})
+    script = 'SELECT time_remaining FROM Delayed_Posts WHERE ID = ' + str(time_remaining_id) + ' ORDER BY ID DESC'
+    cursor.execute(script)
+    data = cursor.fetchone()[0]
+    if data > 0:
+        data -= 1
+    # script = 'INSERT INTO Delayed_Posts (time_remaining) VALUES (%s)'
+    script = 'UPDATE Delayed_Posts SET time_remaining = %s WHERE ID = %s'
+    cursor.execute(script, (data,time_remaining_id))
+    connection.commit()
+    return jsonify({'time_remaining':data})
 
 # @sock.route('/websocket_index')
 # def websocket_index(ws):
