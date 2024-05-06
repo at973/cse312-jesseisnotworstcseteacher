@@ -530,20 +530,29 @@ def uploadPFP(username):
     data = cursor.fetchall() #data[0] = auth_token data[1] = exist
     if len(data) != 0:
         data = data[0]
+        print('HERE IS:')
         print(data)
         if data[1] == True: #If auth token and proper auth token, create post
+            print('got to data[1]')
             script = 'Select username from User where auth_token = %s'
             cursor.execute(script, (hashed_auth,))
-            username = cursor.fetchall()
-            if len(username) != 0:
-                username2 = username[0]
+            user = cursor.fetchall()
+            if len(user) != 0:
+                print('username exist')
+                username2 = user[0][0]
+                print(username2)
+                print(username)
                 if username == username2:
+                    print('username equals auth token username')
                     file = request.files['file']
                     print(file.filename)
+                    print('got here')
                     if file is not None and '.' in file.filename:
+                        print('file exist')
                         fileName = secure_filename(file.filename)
                         fileExtension = fileName.rsplit('.', 1)[1].lower()
                         if fileExtension in ALLOWED_EXTENSIONS:
+                            print('allowed?')
                             if not table_exist('ProfilePic', cursor):
                                 script = 'CREATE Table if not exists ProfilePic (username TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
                                 cursor.execute(script)
@@ -556,8 +565,12 @@ def uploadPFP(username):
                                 script = 'SELECT * FROM ProfilePic ORDER BY ID DESC LIMIT 1'
                                 cursor.execute(script)
                                 id = cursor.fetchone()
-                                id = id[1]
-                                fileName = "PFP" + str(id + 1) + "." + fileExtension
+                                print(id)
+                                if id == None:
+                                    fileName = "PFP" + str(1) + "." + fileExtension
+                                else:
+                                    id = id[1]
+                                    fileName = "PFP" + str(id + 1) + "." + fileExtension
                                 cursor.execute('INSERT INTO ProfilePic (username, image_link) VALUES(%s,%s)', (username, fileName))
                                 connection.commit()
                             if data:
@@ -568,7 +581,10 @@ def uploadPFP(username):
                             cursor.execute(script, (username,))
                             data = cursor.fetchone()
                             connection.commit()
-                            emit('updateProfilePicture', {'image_link': fileName}, broadcast=True, namespace='/')
+                            print('MOrE test')
+                            print(fileName)
+                            print(username)
+                            emit('updateProfilePicture', {'image_link': fileName, 'username': username}, broadcast=True, namespace='/')
 
     print('Here')
     print(username)
@@ -611,6 +627,13 @@ def uploadFile():
 @app.route('/userUploads/<filename>')
 @appLimiter
 def giveUserFile(filename):
+    fileName = secure_filename(filename)
+    print("The filename is: " + fileName)
+    return send_from_directory("public", fileName)
+
+@app.route('/PFPUploads/<filename>')
+@appLimiter
+def givePFP(filename):
     fileName = secure_filename(filename)
     print("The filename is: " + fileName)
     return send_from_directory("public", fileName)

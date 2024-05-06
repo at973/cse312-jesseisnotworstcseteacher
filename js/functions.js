@@ -17,11 +17,11 @@ function newChat(chatJSON) {
   
     const new_message_html =
         `<article class="media">
-            <figure class="media-left">
+            <div class="media-left" name="${username}">
                 <p class="image is-64x64">
                     <img src="images/default-icon.png" />
                 </p>
-            </figure>
+            </div>
             <div class="media-content">
                 <div class="content">
                     <p> <strong> ${username} </strong> </p>
@@ -75,7 +75,7 @@ function newChat(chatJSON) {
             </div>
             <div id="${id}">
             ${imageHTML}<label>Posted by ${user2}</label>
-            <\div>
+            </div>
         </article>`;
     return new_message_html;
 }
@@ -132,18 +132,21 @@ function updateTimer() {
 }
 
 function updateImage (id, imageLink, user2){
+    console.log("TESTSTESTS");
     console.log(id,imageLink,user2);
     document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\"><label>Posted by " + user2 + "</label>";
 }
 
-function updatePFP(image_link){
-    var figureElement = document.querySelector('.media-left');
-
-    figureElement.innerHTML = `
-        <p class="image is-64x64">
-            <img src="${image_link}" />
-        </p>
-    `;
+function updatePFP(image_link, user) {
+    console.log("GET HERE")
+    const elements = document.getElementsByName(user);
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].innerHTML = `
+            <p class="image is-64x64">
+                <img src="/PFPUploads/${image_link}" alt="Profile Picture" />
+            </p>
+        `;
+    }
 }
 
 function updateLikes (id, likes){
@@ -193,12 +196,14 @@ function initws() {
 
     socket.on('updatePost', (data) => {
         console.log(data);
+        console.log("print properly");
         updateImage(data.id,data.image_link,data.username);
     })
 
     socket.on('updateProfilePicture', (data) => {
-        console.log(data);
-        updatePFP(data.image_link);
+        console.log(data.image_link);
+        console.log("Here test");
+        updatePFP(data.image_link,data.username);
     })
 
     socket.on('updateLikes', (data) => {
