@@ -12,6 +12,17 @@
         <!-- <link rel="stylesheet" type="text/css" href="../css/style.css"/>
         <script src="../js/functions.js"></script> -->
     </head>
+    <div>
+        <form action="/uploadPFP/{{ username }}" method="POST" enctype="multipart/form-data">
+            <div class="upload-container">
+                <label for="profile-picture-input" class="upload-label">
+                    Change Profile picture
+                </label>
+                <input id="profile-picture-input" class="file-input" type="file" name="file" accept=".png, .jpg, .jpeg" />
+            </div>
+            <button type="submit" class="button">Submit</button>
+        </form>
+    </div>
     <label id="name" hidden>{{ username }}</label>
     <body onload="welcome();">
         <nav class="level navbar">
@@ -50,19 +61,30 @@
                     <div id="chatbox" class="p-2">
                     </div>
                     <div class="is-widescreen" id="send-message-box">
-                        <form method="post" action="/createpost" id="createpostform">
-                            <div class="field has-addons p-3">
+                        <form class="p-3" method="post" action="/createpost" id="createpostform">
+                            <div class="field has-addons">
                                 <p class="control is-expanded">
                                     <input id="createpostinput" class="input" type="text" name="message" placeholder="Photo Collection Title">
                                 </p>
                                 <p class="control">
-                                    <button type="submit" class="button">Submit</button>
+                                    <a class="button is-static">Delay Submit By:</a>
                                 </p>
-                                <!-- <div class="field-label is-normal"><label class="label" for="message"> Message </label></div>
-                                <div class="field-body">
-                                    <div class="field"><input class="input is-rounded is-expanded" type="text" name="message"></div>
-                                    <button type="submit"> Submit </button>
-                                </div> -->
+                                <p class="control">
+                                  <input id="delaypostinput" class="input" type="number" placeholder="Amount of Time" value="0">
+                                </p>
+                                <p class="control">
+                                  <span class="select">
+                                    <select id="delaypostunit">
+                                      <option value="sec">Seconds</option>
+                                      <option value="min">Minutes</option>
+                                      <option value="hr">Hours</option>
+                                      <option value="day">Days</option>
+                                    </select>
+                                  </span>
+                                </p>
+                                <p class="control">
+                                    <button type="submit" class="button" id="createpostsubmit">Submit</button>
+                                </p>
                             </div>
                         </form>
                     </div>
@@ -114,6 +136,7 @@
 
                     <button class="button is-primary" value="Login" type="submit">Sign in</button>
                 </form>
+                Time Remaining Before Post:<div id="time_remaining"></div>
             </article>
         </section>
     </body>

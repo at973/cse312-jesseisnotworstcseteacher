@@ -1,5 +1,6 @@
 const ws = true;
 let socket = null;
+let remain_timer = null;
 function newChat(chatJSON) {
     const username = chatJSON.username;
     const message = chatJSON.message;
@@ -111,9 +112,38 @@ function updateChat() {
     request.send();
 }
 
+function updateTimer() {
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            const msg = JSON.parse(this.response)
+            if (msg.time_remaining == 0) {
+                document.getElementById('createpostsubmit').removeAttribute('disabled');
+                clearTimeout(remain_timer);
+            } else {
+                document.getElementById('createpostsubmit').setAttribute('disabled', true);
+            }
+            document.getElementById('time_remaining').innerText = msg.time_remaining;
+            console.log('time remaining', msg)
+        }
+    }
+    request.open("GET", "/time_remaining");
+    request.send();
+}
+
 function updateImage (id, imageLink, user2){
     console.log(id,imageLink,user2);
     document.getElementById(id).innerHTML = "<img src = /userUploads/" + imageLink + " width = \"400\"><label>Posted by " + user2 + "</label>";
+}
+
+function updatePFP(image_link){
+    var figureElement = document.querySelector('.media-left');
+
+    figureElement.innerHTML = `
+        <p class="image is-64x64">
+            <img src="${image_link}" />
+        </p>
+    `;
 }
 
 function updateLikes (id, likes){
@@ -141,12 +171,18 @@ function initws() {
     // socket = io.connect(`https://${document.URL}`);
     document.getElementById('createpostform').onsubmit = (ev) => {
         ev.preventDefault();
+        console.log('createpostform executed')
         const msg = document.getElementById('createpostinput').value;
         document.getElementById('createpostinput').value = '';
         const username = document.getElementById('displayed_username').innerText;
+        const delay = document.getElementById('delaypostinput').value;
+        document.getElementById('delaypostinput').value = '';
+        const delay_unit = document.getElementById('delaypostunit').value;
         console.log(msg);
         // socket.send(JSON.stringify({'messageType': 'createpost', 'message': msg}));
-        socket.emit('createpostrequest', {message: msg, auth_token: getCookie('auth_token'), username: username});
+        socket.emit('createpostrequest', {message: msg, 
+            auth_token: getCookie('auth_token'), username: username, 
+            delay: delay, delay_unit: delay_unit});
     }
 
     socket.on('createpostresponse', (data) => {
@@ -160,9 +196,21 @@ function initws() {
         updateImage(data.id,data.image_link,data.username);
     })
 
+    socket.on('updateProfilePicture', (data) => {
+        console.log(data);
+        updatePFP(data.image_link);
+    })
+
     socket.on('updateLikes', (data) => {
         console.log(data);
         updateLikes(data.id,data.likes);
+    })
+
+    socket.on('timeremainingid', (data) => {
+        id = data.id;
+        document.cookie = 'time_remaining_id' + '=; Max-Age=0'
+        document.cookie = `time_remaining_id=${id};`
+        remain_timer = setInterval(updateTimer, 1000);
     })
 }
 

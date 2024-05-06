@@ -1,18 +1,34 @@
 from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request, jsonify, Response
+from datetime import datetime, timedelta
+import time as timer
 # from flask_sock import Sock
 from flask_socketio import SocketIO, emit
+# from flask_apscheduler import APScheduler
 import json
 import mysql.connector
 import bcrypt
 import secrets
 import hashlib
-import time 
 import os
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
+from flask_limiter import Limiter
+from flask_limiter.errors import RateLimitExceeded
+from time import time
+
+last_breach = {}
+clients = {}
+
+def retrieve_remote_address():
+    print(request.headers.get('X-Forwarded-For', request.remote_addr))
+    return request.headers.get('X-Forwarded-For', request.remote_addr)
 
 app = Flask(__name__)
+# app.config['']
 # sock = Sock(app)
+limiter = Limiter(retrieve_remote_address, app=app,default_limits=["500 per 10 seconds"],storage_uri="memory://",strategy="fixed-window-elastic-expiry",)
+appLimiter = limiter.shared_limit("0 per 30 seconds",scope="application", exempt_when=lambda: should_exempt(request.headers.get('X-Forwarded-For', request.remote_addr)))
+
 socketio = SocketIO(app)
 clients = {}
 
@@ -26,16 +42,37 @@ config = {
 
 socketio = SocketIO(app)
 
-# success = False
+@app.before_request
+def before_request():
+    address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if address in clients:
+        clients[address].append(time())
+    else:
+        clients[address] = [time()]
+    
+def remove_before(requestTimeList, seconds):
+    newTimeList = requestTimeList
+    for requestTime in requestTimeList:
+        if (time() - requestTime > seconds):
+            newTimeList.remove(requestTime)
+    return newTimeList
 
-# while not success:
-#     time.sleep(3)
-#     try:
-#         db = mysql.connector.connect(host='oursql', user='user', passwd='password', database='mysql')
-#         success = True
-#     except:
-#         pass
-# mycursor = db.cursor()
+
+def should_exempt(client_ip):
+    client = []
+    if client_ip in clients:
+        client = clients[client_ip]
+        
+    clients[client_ip] = remove_before(client.copy(), 10)
+    if (len(clients[client_ip]) > 50):
+        print("Client will be limited ", len(clients[client_ip]))
+        return False
+    if (client_ip in last_breach):
+        if (time() - last_breach[client_ip] < 30):
+            print("Client rate limited for 30 seconds after last post")
+            return False
+    print("Client not Limited. Total requests = ", len(clients[client_ip]))
+    return True
 
 @app.after_request
 def after_request(response):
@@ -50,7 +87,7 @@ def connect_to_database():
             Success = True
         except:
             print("waiting 3 seconds for mysql container to start...")
-            time.sleep(3)
+            timer.sleep(3)
     cursor = connection.cursor()
     return connection, cursor
 
@@ -70,6 +107,7 @@ def get_username():
     return None
 
 @app.route('/') #Returns templates/index.html
+@appLimiter
 def index():
     username='guest'
     if 'auth_token' in request.cookies:
@@ -103,6 +141,7 @@ def index():
     return response
 
 @app.route('/direct_message/<recipient>')
+@appLimiter
 def dm(recipient):
     connection, cursor = connect_to_database()
     username = get_username()
@@ -132,6 +171,7 @@ def dm(recipient):
 
 
 @app.route('/register', methods=['POST'])
+@appLimiter
 def giveRegister():
     username = request.form.get('username')
     password = request.form.get('password')
@@ -163,6 +203,7 @@ def giveRegister():
     return redirect(url_for('index'))
 
 @app.route('/login', methods=['POST'])
+@appLimiter
 def giveLogin():
     response = make_response(redirect(url_for('index')))
     username = request.form.get('username')
@@ -212,6 +253,7 @@ def giveLogin():
         return response
 
 @app.route('/logout', methods=['POST'])
+@appLimiter
 def giveLogout():
     response = make_response(redirect(url_for('index')))
     if 'auth_token' in request.cookies:
@@ -224,10 +266,34 @@ def giveLogout():
     return response
 
 @app.route('/createpost', methods=['POST'])
+@appLimiter
 def createPostPolling():
+    timer.sleep(int(request.form.get('delaypostinput')) * postUnitCalc(request.form.get('delaypostunit')))
     createPost(request.cookies.get('auth_token'), request.form.get('message'))
+            #    request.form.get('delaypostinput'), request.form.get('delaypostunit'))
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
+
+def postUnitCalc(unit):
+    unit_dict = {'sec': 1, 'min': 60, 'hr': 3600, 'day': 3600 * 24}
+    return unit_dict[unit]
+
+def calcPostTime(delay, unit):
+    time_unit_dict = {'sec': timedelta(seconds=delay), 
+                      'min': timedelta(minutes=delay),
+                      'hr': timedelta(hours=delay),
+                      'day': timedelta(days=delay)}
+    return datetime.now() + time_unit_dict[unit]
+
+def equalTime(datetime1, datetime2):
+    return datetime1.second == datetime2.second \
+        and datetime1.minute == datetime2.minute \
+            and datetime1.hour == datetime2.hour \
+                and datetime1.day == datetime2.day
+
+@app.route('/remaining time', methods=['POST'])
+def remaining_time():
+    pass
 
 def createPost(auth, message):
     #Create post should be called via html form
@@ -322,6 +388,7 @@ def createPostDM(message, recipient, user):
     return response
 
 @app.route('/like', methods=['POST'])
+@appLimiter
 def createLike():
     #Create post should be called via html form
     auth = request.cookies.get('auth_token')
@@ -387,6 +454,7 @@ def fetchLikes(id, cursor):
     return likes
 
 @app.route('/messages', methods=['GET'])
+@appLimiter
 def readMessages():
     connection, cursor = connect_to_database()
     if not table_exist('Posts',cursor):
@@ -410,6 +478,7 @@ def readMessages():
     return jsonify(result)
 
 @app.route('/DMmessages', methods=['GET'])
+@appLimiter
 def readDMMessages():
     username = request.args.get('username')
     recipient_username = request.args.get('Recipient_Username')
@@ -443,7 +512,72 @@ def table_exist(name: str, cursor):
         return True
     return False
 
+@app.route('/uploadPFP/<username>', methods=['POST'])
+@appLimiter
+def uploadPFP(username):
+    connection, cursor = connect_to_database()
+    if username == 'guest' or username == 'Guest':
+        return make_response("Forbidden", 403)
+    auth = request.cookies.get('auth_token')
+    if not auth:
+        return make_response("Forbidden", 403)
+    hashed_auth = hashlib.sha256(auth.encode()).hexdigest()
+    if not table_exist("Token",cursor):
+            cursor.execute('CREATE Table IF NOT EXISTS Token (auth_token TEXT, exist BOOLEAN)')
+            connection.commit()
+    script = 'SELECT * from Token where auth_token = %s'
+    cursor.execute(script, (hashed_auth,))
+    data = cursor.fetchall() #data[0] = auth_token data[1] = exist
+    if len(data) != 0:
+        data = data[0]
+        print(data)
+        if data[1] == True: #If auth token and proper auth token, create post
+            script = 'Select username from User where auth_token = %s'
+            cursor.execute(script, (hashed_auth,))
+            username = cursor.fetchall()
+            if len(username) != 0:
+                username2 = username[0]
+                if username == username2:
+                    file = request.files['file']
+                    print(file.filename)
+                    if file is not None and '.' in file.filename:
+                        fileName = secure_filename(file.filename)
+                        fileExtension = fileName.rsplit('.', 1)[1].lower()
+                        if fileExtension in ALLOWED_EXTENSIONS:
+                            if not table_exist('ProfilePic', cursor):
+                                script = 'CREATE Table if not exists ProfilePic (username TEXT, ID int AUTO_INCREMENT, image_link TEXT, PRIMARY KEY (ID))'
+                                cursor.execute(script)
+                                connection.commit()
+                            script = 'SELECT * FROM ProfilePic WHERE username = %s'
+                            cursor.execute(script, (username,))
+                            data = cursor.fetchone()
+                            connection.commit()
+                            if not data:
+                                script = 'SELECT * FROM ProfilePic ORDER BY ID DESC LIMIT 1'
+                                cursor.execute(script)
+                                id = cursor.fetchone()
+                                id = id[1]
+                                fileName = "PFP" + str(id + 1) + "." + fileExtension
+                                cursor.execute('INSERT INTO ProfilePic (username, image_link) VALUES(%s,%s)', (username, fileName))
+                                connection.commit()
+                            if data:
+                                id = data[1]
+                                fileName = "PFP" + str(id) + "." + fileExtension
+                            file.save('/code/public/' + fileName)
+                            script = 'SELECT * FROM ProfilePic WHERE username = %s'
+                            cursor.execute(script, (username,))
+                            data = cursor.fetchone()
+                            connection.commit()
+                            emit('updateProfilePicture', {'image_link': fileName}, broadcast=True, namespace='/')
+
+    print('Here')
+    print(username)
+    cursor.close()
+    connection.close()
+    return redirect("/", code=302)
+
 @app.route('/upload', methods=['POST'])
+@appLimiter
 def uploadFile():
     file = request.files['file']
     print(file.filename)
@@ -475,24 +609,29 @@ def uploadFile():
     return redirect("/", code=302)
 
 @app.route('/userUploads/<filename>')
+@appLimiter
 def giveUserFile(filename):
     fileName = secure_filename(filename)
     print("The filename is: " + fileName)
     return send_from_directory("public", fileName)
 
 @app.route('/css/<css>') #Returns any file from css directory
+@appLimiter
 def giveCSS(css):
     return send_from_directory('css', css)
 
 @app.route('/js/<js>') #Returns any file from js directory
+@appLimiter
 def giveJS(js):
     return send_from_directory('js', js)
 
 @app.route('/images/<images>') #Returns any file from images directory
+@appLimiter
 def giveImage(images):
     return send_from_directory('images', images)
 
 @socketio.on('connect')
+@appLimiter
 def handle_connect():
     print('socket connected')
 
@@ -501,9 +640,61 @@ def ws_createpost(post):
     auth = post.get('auth_token')
     message = post.get('message')
     username = post.get('username')
+    connection, cursor = connect_to_database()
+    delay = post.get('delay')
+    if delay is None or delay == '':
+        delay = 0
+    time_remaining = int(delay) * postUnitCalc(post.get('delay_unit'))
+    print('time_remaining', time_remaining)
+
+    if not table_exist('Delayed_Posts', cursor):
+        script = 'CREATE Table if not exists Delayed_Posts (ID int AUTO_INCREMENT, time_remaining int, PRIMARY KEY (ID))'
+        cursor.execute(script)
+        connection.commit()
+
+    script = 'INSERT INTO Delayed_Posts (time_remaining) VALUES (%s)'
+    cursor.execute(script, (time_remaining,))
+    connection.commit()
+    script = 'SELECT ID From Delayed_Posts ORDER BY ID DESC LIMIT 1'
+    cursor.execute(script)
+    time_remaining_id = cursor.fetchone()[0]
+    cursor.close()
+    connection.close()
+    emit('timeremainingid', {'id': time_remaining_id})
+    # print('post delay', post.get('delay') * postUnitCalc(post.get('delay_unit')))
+    timer.sleep(int(delay) * postUnitCalc(post.get('delay_unit')))
     id = createPost(auth, message)
     emit('createpostresponse', {'message': message, 'username': username, 'id': id, 'likes': '0', 'image_link': "", 'user2': ""}, broadcast=True)
 
+@app.errorhandler(RateLimitExceeded)
+def ratelimit_handler(e):
+    address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if address in last_breach:
+        if (time() - last_breach[address] > 30):
+            last_breach[address] = time()
+    else:
+        last_breach[address] = time()
+    clients[address] = []
+    return "ratelimit exceeded! Too many requests. Please wait 30 seconds", 429
+@app.route('/time_remaining')
+def send_time_remaining():
+    time_remaining_id = int(request.cookies.get('time_remaining_id', '0'))
+    connection, cursor = connect_to_database()
+    if not table_exist('Delayed_Posts', cursor):
+        script = 'CREATE Table if not exists Delayed_Posts (ID int AUTO_INCREMENT, time_remaining int, PRIMARY KEY (ID))'
+        cursor.execute(script)
+        connection.commit()
+        return jsonify({'time_remaining': 0})
+    script = 'SELECT time_remaining FROM Delayed_Posts WHERE ID = ' + str(time_remaining_id) + ' ORDER BY ID DESC'
+    cursor.execute(script)
+    data = cursor.fetchone()[0]
+    if data > 0:
+        data -= 1
+    # script = 'INSERT INTO Delayed_Posts (time_remaining) VALUES (%s)'
+    script = 'UPDATE Delayed_Posts SET time_remaining = %s WHERE ID = %s'
+    cursor.execute(script, (data,time_remaining_id))
+    connection.commit()
+    return jsonify({'time_remaining':data})
 
 # @sock.route('/websocket_index')
 # def websocket_index(ws):
