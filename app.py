@@ -1,6 +1,9 @@
 from flask import Flask, render_template, send_from_directory, make_response, redirect, url_for, request, jsonify, Response
+from datetime import datetime, timedelta
+import time
 # from flask_sock import Sock
 from flask_socketio import SocketIO, emit
+# from flask_apscheduler import APScheduler
 import json
 import mysql.connector
 import bcrypt
@@ -12,7 +15,9 @@ from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
 app = Flask(__name__)
+# app.config['']
 # sock = Sock(app)
+# scheduler = APScheduler()
 socketio = SocketIO(app)
 clients = {}
 
@@ -226,11 +231,26 @@ def giveLogout():
 @app.route('/createpost', methods=['POST'])
 def createPostPolling():
     createPost(request.cookies.get('auth_token'), request.form.get('message'))
+            #    request.form.get('delaypostinput'), request.form.get('delaypostunit'))
     response = make_response(redirect(url_for('index'))) #Return 200
     return response
 
+def calcPostTime(delay, unit):
+    time_unit_dict = {'sec': timedelta(seconds=delay), 
+                      'min': timedelta(minutes=delay),
+                      'hr': timedelta(hours=delay),
+                      'day': timedelta(days=delay)}
+    return datetime.now() + time_unit_dict[unit]
+
+def equalTime(datetime1, datetime2):
+    return datetime1.second == datetime2.second \
+        and datetime1.minute == datetime2.minute \
+            and datetime1.hour == datetime2.hour \
+                and datetime1.day == datetime2.day
+
 def createPost(auth, message):
     #Create post should be called via html form
+    time.sleep(10)
     inserted_id = -1
     print("Auth is: " + str(auth))
     print("Message is: " + str(message))
@@ -244,6 +264,9 @@ def createPost(auth, message):
         script = 'CREATE Table if not exists Posts (username TEXT, message TEXT, ID int AUTO_INCREMENT, image_link TEXT, user2 TEXT, PRIMARY KEY (ID))'
         cursor.execute(script)
         connection.commit()
+
+    # if not table_exist('Delayed_Posts', cursor):
+    #     script = 'CREATE Table if not exists Delayed_Posts (username)'
 
     # testCreate() #MUST REMOVE, JUST FOR TESTING!!!
 
